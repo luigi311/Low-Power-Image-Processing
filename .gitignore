@@ -3,3 +3,6 @@
 *.jpeg
 *.tiff
 *.bmp
+
+# Ignore models
+**/*.pb
