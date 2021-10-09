@@ -64,7 +64,7 @@ if __name__ == "__main__":
     tic = time()
     print(f"Starting {args.method} {args.scale}x super sample")
     out_image = super_resolution(image, args.method, args.scale)
-    cv2.imwrite(f"{args.output_image}.png", out_image)
+    cv2.imwrite(f"{args.output_image}", out_image)
     print(f"Super resolution image in {time()-tic} seconds")
 
     # Show image
