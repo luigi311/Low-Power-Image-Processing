@@ -58,7 +58,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ffmpeg \
-        wget && \
+        wget \
+        libopenblas-dev \
+        sudo && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -66,6 +68,8 @@ COPY --from=compile-image /opt/venv /opt/venv
 
 # Create app_user
 RUN useradd -m -d /home/app_user -s /bin/bash app_user
+# Enable sudo
+RUN echo "app_user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 WORKDIR /app
 

@@ -3,9 +3,11 @@
 help() {
     echo "Usage: ./entrypoint.sh [COMMANDS] [FLAGS]"
     echo "COMMANDS:"
-    echo "  --help, -h: Print this help message"
-    echo "  auto_stack: Stacks all images in a folder for better quality"
-    echo "  opencv_super_resolution: Super resolution the image"
+    echo "  --help, -h              Print this help message"
+    echo "  auto_stack              Stacks all images in a folder for better quality"
+    echo "  opencv_super_resolution Super resolution the image"
+    echo "  ffdnet                  Denoise using ffdnet"
+    echo "  ircnn                   Denoise using ircnn"
     echo "FLAGS: Flags to pass to command called"
 }
 
@@ -26,6 +28,9 @@ elif [ "$COMMANDS" = "auto_stack" ]; then
 # else if COMMANDS is "opencv_super_resolution"
 elif [ "$COMMANDS" = "opencv_super_resolution" ]; then
     python super_resolution/opencv_super_resolution/opencv_super_resolution.py $FLAGS
+elif [ "$COMMANDS" = "ffdnet" ]; then
+    python denoise/ffdnet/ffdnet.py $FLAGS
+
 # else
 else
     echo "Unknown command: $COMMANDS"
