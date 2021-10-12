@@ -18,8 +18,6 @@ do
     FLAGS="$FLAGS $i"
 done
 
-echo "$FLAGS"
-
 # if COMMANDS is "--help" or "-h"
 if [ "$COMMANDS" = "--help" ] || [ "$COMMANDS" = "-h" ]
 then
@@ -31,7 +29,7 @@ then
 # else if COMMANDS is "opencv_super_resolution"
 elif [ "$COMMANDS" = "opencv_super_resolution" ]
 then
-    python stacking/opencv_super_resolution/opencv_super_resolution.py $FLAGS
+    python super_resolution/opencv_super_resolution/opencv_super_resolution.py $FLAGS
 # else
 else
     echo "Unknown command: $COMMANDS"
