@@ -1,6 +1,6 @@
 #!/bin/bash
 
-help () {
+help() {
     echo "Usage: ./entrypoint.sh [COMMANDS] [FLAGS]"
     echo "COMMANDS:"
     echo "  --help, -h: Print this help message"
@@ -12,23 +12,19 @@ help () {
 COMMANDS="$1"
 shift # short for shift 1
 
-for i
-do 
+for i; do
     # Save all arguments in a variable FLAGS
     FLAGS="$FLAGS $i"
 done
 
 # if COMMANDS is "--help" or "-h"
-if [ "$COMMANDS" = "--help" ] || [ "$COMMANDS" = "-h" ]
-then
+if [ "$COMMANDS" = "--help" ] || [ "$COMMANDS" = "-h" ]; then
     help
 # else if COMMANDS is "auto_stack"
-elif [ "$COMMANDS" = "auto_stack" ]
-then
+elif [ "$COMMANDS" = "auto_stack" ]; then
     python stacking/auto_stack/auto_stack.py $FLAGS
 # else if COMMANDS is "opencv_super_resolution"
-elif [ "$COMMANDS" = "opencv_super_resolution" ]
-then
+elif [ "$COMMANDS" = "opencv_super_resolution" ]; then
     python super_resolution/opencv_super_resolution/opencv_super_resolution.py $FLAGS
 # else
 else
