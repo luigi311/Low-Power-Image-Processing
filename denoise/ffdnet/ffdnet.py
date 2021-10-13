@@ -1,6 +1,7 @@
 import os.path
 import logging
 import argparse
+from requests import get  # to make GET request
 
 import numpy as np
 from collections import OrderedDict
@@ -11,10 +12,6 @@ from utils import utils_image as util
 
 
 '''
-Spyder (Python 3.6)
-PyTorch 1.1.0
-Windows 10 or Linux
-
 Kai Zhang (cskaizhang@gmail.com)
 github: https://github.com/cszn/KAIR
         https://github.com/cszn/FFDNet
@@ -30,30 +27,19 @@ github: https://github.com/cszn/KAIR
   publisher={IEEE}
 }
 
-% If you have any question, please feel free to contact with me.
-% Kai Zhang (e-mail: cskaizhang@gmail.com; github: https://github.com/cszn)
-
 by Kai Zhang (12/Dec./2019)
+by Luigi311 (12/Oct./2021)
 '''
 
-"""
-# --------------------------------------------
-|--model_zoo             # model_zoo
-   |--ffdnet_gray        # model_name, for color images
-   |--ffdnet_color
-   |--ffdnet_color_clip  # for clipped uint8 color images
-   |--ffdnet_gray_clip
-|--testset               # testsets
-   |--set12              # testset_name
-   |--bsd68
-   |--cbsd68
-|--results               # results
-   |--set12_ffdnet_gray  # result_name = testset_name + '_' + model_name
-   |--set12_ffdnet_color
-   |--cbsd68_ffdnet_color_clip
-# --------------------------------------------
-"""
-
+def downloader(url, file_name, directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    # open in binary mode
+    with open(file_name, "wb") as file:
+        # get request
+        response = get(url)
+        # write to file
+        file.write(response.content)
 
 def main():
 
@@ -83,6 +69,7 @@ def main():
     model_name = args.model                     # 'ffdnet_gray' | 'ffdnet_color' | 'ffdnet_color_clip' | 'ffdnet_gray_clip'
     need_degradation = True                     # default: True
     show_img = args.show                        # default: False
+    url = f"https://github.com/cszn/KAIR/releases/download/v1.0/{model_name}.pth"
 
     task_current = 'dn'       # 'dn' for denoising | 'sr' for super-resolution
     sf = 1                    # unused for denoising
@@ -101,6 +88,11 @@ def main():
     
     border = sf if task_current == 'sr' else 0     # shave boader to calculate PSNR and SSIM
     model_path = os.path.join( args.model_path, model_name+'.pth')
+
+    if not os.path.exists(model_path):
+        print("Downloading model...")
+        downloader(url, model_path, args.model_path)
+        print("Download Complete")
 
     # ----------------------------------------
     # L_path, E_path, H_path
