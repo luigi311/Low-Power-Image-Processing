@@ -9,6 +9,10 @@ RUN sudo pip install -r requirements.txt
 
 COPY --chown=app_user:app_user . /app
 
+# Fix return
+RUN sed -i 's/\r$//' download_models.sh && \
+    sed -i 's/\r$//' entrypoint.sh
+
 RUN chmod +x download_models.sh && ./download_models.sh
 
 # Entrypoint entrypoint.sh
