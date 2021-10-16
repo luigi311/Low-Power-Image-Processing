@@ -1,8 +1,8 @@
 #!/bin/bash
 
 help() {
-    echo "Usage: ./entrypoint.sh [COMMANDS] [FLAGS]"
-    echo "COMMANDS:"
+    echo "Usage: ./entrypoint.sh [COMMAND] [FLAGS]"
+    echo "COMMAND:"
     echo "  --help, -h              Print this help message"
     echo "  auto_stack              Stacks all images in a folder for better quality"
     echo "  opencv_super_resolution Super resolution the image"
@@ -11,7 +11,7 @@ help() {
     echo "FLAGS: Flags to pass to command called"
 }
 
-COMMANDS="$1"
+COMMAND="$1"
 shift # short for shift 1
 
 for i; do
@@ -19,20 +19,17 @@ for i; do
     FLAGS="$FLAGS $i"
 done
 
-# if COMMANDS is "--help" or "-h"
-if [ "$COMMANDS" = "--help" ] || [ "$COMMANDS" = "-h" ]; then
+if [ "$COMMAND" = "--help" ] || [ "$COMMAND" = "-h" ]; then
     help
-# else if COMMANDS is "auto_stack"
-elif [ "$COMMANDS" = "auto_stack" ]; then
+elif [ "$COMMAND" = "auto_stack" ]; then
     python stacking/auto_stack/auto_stack.py $FLAGS
-# else if COMMANDS is "opencv_super_resolution"
-elif [ "$COMMANDS" = "opencv_super_resolution" ]; then
+elif [ "$COMMAND" = "opencv_super_resolution" ]; then
     python super_resolution/opencv_super_resolution/opencv_super_resolution.py $FLAGS
-elif [ "$COMMANDS" = "ffdnet" ]; then
+elif [ "$COMMAND" = "ffdnet" ]; then
     python denoise/ffdnet/ffdnet.py $FLAGS
-
-# else
+elif [ "$COMMAND" = "ircnn" ]; then
+    python denoise/ircnn/ircnn.py $FLAGS
 else
-    echo "Unknown command: $COMMANDS"
-    help
+    echo "Unknown command: $COMMAND calling directly"
+    $COMMAND $FLAGS
 fi
