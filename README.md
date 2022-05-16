@@ -12,7 +12,12 @@ Recommended to process an image the normal route and then pick and chose what to
 ## Algorithms
 
 -   stacking
-    -   auto_stacking: Stack images in a single image to reduce noise and import quality
+    -   auto_stacking: [Stack multiple images into a single image to reduce noise and improve quality](https://github.com/maitek/image_stacking)
 
 -   super_resolution
-    -   opencv_super_resolution: Super resolution using OpenCV built-in methods
+    -   opencv_super_resolution: [Super resolution using OpenCV built-in methods via ESPCN or FSRCNN](https://learnopencv.com/super-resolution-in-opencv/)
+
+-   denoise
+    -   fastNlMeansDenoisingColored: [Denoise using OpencV built-in methods](https://opencv24-python-tutorials.readthedocs.io/en/latest/py_tutorials/py_photo/py_non_local_means/py_non_local_means.html)
+    -   ircnn: [Machine Learning denoiser](https://github.com/cszn/KAIR)
+    -   ffdnet: [Machine Learning denoiser](https://github.com/cszn/FFDNet)
