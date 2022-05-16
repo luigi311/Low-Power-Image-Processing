@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("input_dir", help="Input directory of images")
     parser.add_argument("--interal_image_extension", default="png", help="Extension of images to process")
     parser.add_argument("--single_image", help="Single image mode", action="store_true")
-    parser.add_argument("--histogram_equalize", help="Histogram equalize", action="store_true")
+    parser.add_argument("--contrast_method", default="none", help="Contrast method to use", choices=["histogram_clahe", "histogram_equalize"])
     parser.add_argument("--dehaze_method", default="none", help="Dehaze method to use on all images", choices=["none", "darktables"])
     parser.add_argument("--color_method", default="none", help="Color method to use on final images", choices=["none", "image_adaptive_3dlut"])
     parser.add_argument("--auto_stack", help="Auto stack images", action="store_true")
@@ -81,22 +81,34 @@ if __name__ == "__main__":
 
     print(f"Loaded {len(numpy_images)} images in {time()-loading_tic} seconds")
 
-    if args.histogram_equalize:
+    if args.contrast_method != "none":
         equalized_images = []
 
         print("Histogram equalizing images")
         equalize_tic = time()
 
         for image in numpy_images:
-            # equalize all 3 channels individually and append that to equalized_images
-            equalized_1 = (cv2.equalizeHist(image[:, :, 0]))
-            equalized_2 = (cv2.equalizeHist(image[:, :, 1]))
-            equalized_3 = (cv2.equalizeHist(image[:, :, 2]))
+            if args.contrast_method == "histogram_clahe":
+                # equalize all 3 channels with clahe and append that to equalized_images
+                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+                equalized_1 = (clahe.apply(image[:, :, 0]))
+                equalized_2 = (clahe.apply(image[:, :, 1]))
+                equalized_3 = (clahe.apply(image[:, :, 2]))
+
+            elif args.contrast_method == "histogram_equalize":
+                # equalize all 3 channels individually and append that to equalized_images
+                equalized_1 = (cv2.equalizeHist(image[:, :, 0]))
+                equalized_2 = (cv2.equalizeHist(image[:, :, 1]))
+                equalized_3 = (cv2.equalizeHist(image[:, :, 2]))
+            
+            else:
+                print("ERROR: Unknown contrast method")
+                exit(1)
+
             equalized_images.append(numpy.stack((equalized_1, equalized_2, equalized_3), axis=2))
-        
+
         numpy_images = equalized_images
         print(f"Histogram equalized in {time()-equalize_tic} seconds")
-
 
     if args.dehaze_method != "none":
         dehaze_tic = time()
