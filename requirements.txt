@@ -2,3 +2,6 @@ opencv-contrib-python
 scikit-image
 numpy
 requests
+rawpy
+imageio
+matplotlib
