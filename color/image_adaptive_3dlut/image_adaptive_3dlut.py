@@ -41,7 +41,7 @@ def image_adaptive_3dlut(image, input_color_space):
         criterion_pixelwise.cuda()
 
     # Load pretrained models
-    LUTs = torch.load(f"{model_dir}/LUTs.pth")
+    LUTs = torch.load(f"{model_dir}/LUTs.pth", map_location=torch.device('cpu'))
     LUT0.load_state_dict(LUTs["0"])
     LUT1.load_state_dict(LUTs["1"])
     LUT2.load_state_dict(LUTs["2"])
@@ -52,7 +52,7 @@ def image_adaptive_3dlut(image, input_color_space):
     LUT2.eval()
     #LUT3.eval()
     #LUT4.eval()
-    classifier.load_state_dict(torch.load(f"{model_dir}/classifier.pth"))
+    classifier.load_state_dict(torch.load(f"{model_dir}/classifier.pth", map_location=torch.device('cpu')))
     classifier.eval()
 
 

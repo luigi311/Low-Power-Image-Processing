@@ -1,4 +1,4 @@
-FROM luigi311/low-power-image-processing-base-image:latest
+FROM docker.io/luigi311/low-power-image-processing-base-image:latest
 
 COPY requirements.txt /app/requirements.txt
 
