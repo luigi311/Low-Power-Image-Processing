@@ -3,14 +3,17 @@ import numpy as np
 from time import time
 from skimage.exposure import is_low_contrast
 
+
 def loadImagesList(path, filter_contrast=False):
     file_list = os.listdir(path)
-    orig_file_list = [os.path.join(path, x)
-                 for x in file_list if x.endswith(('.jpg', '.png', '.bmp', '.tiff'))]
+    orig_file_list = [
+        os.path.join(path, x)
+        for x in file_list
+        if x.endswith((".jpg", ".png", ".bmp", ".tiff"))
+    ]
 
     if filter_contrast:
-        file_list = [
-            x for x in orig_file_list if not is_low_contrast(cv2.imread(x))]
+        file_list = [x for x in orig_file_list if not is_low_contrast(cv2.imread(x))]
 
         orig_file_list.sort()
         file_list.sort()
@@ -22,9 +25,11 @@ def loadImagesList(path, filter_contrast=False):
         elif len(file_list) < len(orig_file_list) and len(file_list) > 0:
             print(f"Excluding {exclusion}")
         else:
-            print(f"Everything is low contrast, attempting to use all images but 0.dng.tiff")
+            print(
+                f"Everything is low contrast, attempting to use all images but 0.dng.tiff"
+            )
             file_list = orig_file_list
-            
+
             # Remove 0.dng.tiff from list if it exists, specific to pinephone 0.dng.tiff sometimes being corrupted
             try:
                 file_list.remove(f"{path}/0.dng.tiff")
@@ -52,8 +57,12 @@ def stackImagesECC(file_list):
             stacked_image = image
         else:
             # Estimate perspective transform
-            s, M = cv2.findTransformECC(cv2.cvtColor(
-                image, cv2.COLOR_BGR2GRAY), first_image, M, cv2.MOTION_HOMOGRAPHY)
+            s, M = cv2.findTransformECC(
+                cv2.cvtColor(image, cv2.COLOR_BGR2GRAY),
+                first_image,
+                M,
+                cv2.MOTION_HOMOGRAPHY,
+            )
             w, h, _ = image.shape
             # Align image to first image
             image = cv2.warpPerspective(image, M, (h, w))
@@ -62,7 +71,7 @@ def stackImagesECC(file_list):
             stacked_image += image
 
     stacked_image /= len(file_list)
-    stacked_image = (stacked_image*255).astype(np.uint8)
+    stacked_image = (stacked_image * 255).astype(np.uint8)
     return stacked_image
 
 
@@ -102,10 +111,10 @@ def stackImagesKeypointMatching(file_list):
             matches = matcher.match(first_des, des)
             matches = sorted(matches, key=lambda x: x.distance)
 
-            src_pts = np.float32(
-                [first_kp[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
-            dst_pts = np.float32(
-                [kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+            src_pts = np.float32([first_kp[m.queryIdx].pt for m in matches]).reshape(
+                -1, 1, 2
+            )
+            dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
 
             # Estimate perspective transformation
             M, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
@@ -114,44 +123,48 @@ def stackImagesKeypointMatching(file_list):
             stacked_image += imageF
 
     stacked_image /= len(file_list)
-    stacked_image = (stacked_image*255).astype(np.uint8)
+    stacked_image = (stacked_image * 255).astype(np.uint8)
     return stacked_image
 
 
 # ===== MAIN =====
 # Read all files in directory
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('input_dir', help='Input directory of images ()')
-    parser.add_argument('output_image', help='Output image name')
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument("input_dir", help="Input directory of images ()")
+    parser.add_argument("output_image", help="Output image name")
     parser.add_argument(
-        '--method', help='Stacking method ORB (faster) or ECC (more precise)', choices=['ORB', 'ECC'], default='ECC')
-    parser.add_argument('--filter_contrast',
-                        help='Filter low contrast images', action='store_true')
-    parser.add_argument('--show', help='Show result image',
-                        action='store_true')
+        "--method",
+        help="Stacking method ORB (faster) or ECC (more precise)",
+        choices=["ORB", "ECC"],
+        default="ECC",
+    )
+    parser.add_argument(
+        "--filter_contrast", help="Filter low contrast images", action="store_true"
+    )
+    parser.add_argument("--show", help="Show result image", action="store_true")
     args = parser.parse_args()
 
     image_folder = args.input_dir
     if not os.path.exists(image_folder):
         print(f"ERROR {image_folder} not found!")
         exit()
-    
-    if image_folder.endswith('/'):
+
+    if image_folder.endswith("/"):
         image_folder = image_folder[:-1]
 
     file_list = loadImagesList(image_folder, args.filter_contrast)
 
     tic = time()
 
-    if args.method == 'ECC':
+    if args.method == "ECC":
         # Stack images using ECC method
         description = "Stacking images using ECC method"
         print(description)
         stacked_image = stackImagesECC(file_list)
 
-    elif args.method == 'ORB':
+    elif args.method == "ORB":
         # Stack images using ORB keypoint method
         description = "Stacking images using ORB method"
         print(description)
