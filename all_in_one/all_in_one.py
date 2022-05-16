@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     if args.single_image:
         # Create main image
-        image = single_image(numpy_images, args.input_dir, args.show, args.interal_image_extension)
+        image = single_image(image, args.input_dir, args.interal_image_extension)
         if args.show:
             cv2.imshow("Image", image)
             cv2.waitKey(0)
