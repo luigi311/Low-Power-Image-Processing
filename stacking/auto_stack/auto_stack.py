@@ -66,8 +66,6 @@ def stackImagesECC(file_list):
             w, h, _ = image.shape
             # Align image to first image
             image = cv2.warpPerspective(image, M, (h, w))
-            print(image)
-            print(stacked_image)
             stacked_image += image
 
     stacked_image /= len(file_list)
