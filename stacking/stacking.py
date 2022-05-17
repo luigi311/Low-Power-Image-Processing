@@ -37,10 +37,15 @@ def stackImagesECCWorker(numpy_array):
     return stacked_image
 
 def stackImagesECC(numpy_array, stacking_amount=3):
+    if stacking_amount == 1:
+        print("Error: Stacking amount must be greater than 1")
+        exit(1)
+    
     stacked = []
     # split into chunks of size stacking_amount
     chunks = [numpy_array[x:x + stacking_amount] for x in range(0, len(numpy_array), stacking_amount)]
 
+    print(len(chunks))
     for chunk in chunks:
         if len(chunk) > 1:
             stacked.append(stackImagesECCWorker(chunk))
@@ -49,7 +54,7 @@ def stackImagesECC(numpy_array, stacking_amount=3):
 
     #recursively stack images into there is only one image left
     while len(stacked) > 1:
-        stacked = [stackImagesECC(stacked)]
+        stacked = [stackImagesECC(stacked, stacking_amount)]
 
     if len(stacked) == 1:
         #convert stacked to numpy array
