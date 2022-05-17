@@ -27,6 +27,7 @@ if __name__ == "__main__":
     parser.add_argument("--dehaze_method", default="none", help="Dehaze method to use on all images", choices=["none", "darktables"])
     parser.add_argument("--color_method", default="none", help="Color method to use on final images", choices=["none", "image_adaptive_3dlut"])
     parser.add_argument("--auto_stack", help="Auto stack images", action="store_true")
+    parser.add_argument("--stack_amount", default=3, type=int, help="Amount of images to stack at a time")
     parser.add_argument(
         "--stack_method",
         help="Stacking method ORB (faster) or ECC (more precise)",
@@ -176,25 +177,27 @@ if __name__ == "__main__":
 
     if args.auto_stack:
         stack_tic = time()
+        try:
+            if args.stack_method == "ECC":
+                from stacking.stacking import stackImagesECC
 
-        if args.stack_method == "ECC":
-            from stacking.stacking import stackImagesECC
+                # Stack images using ECC method
+                print("Stacking images using ECC method")
+                image = stackImagesECC(numpy_images, args.stack_amount)
 
-            # Stack images using ECC method
-            print("Stacking images using ECC method")
-            image = stackImagesECC(numpy_images)
+            elif args.stack_method == "ORB":
+                from stacking.stacking import stackImagesKeypointMatching
+                
+                # Stack images using ORB keypoint method
+                print("Stacking images using ORB method")
+                image = stackImagesKeypointMatching(numpy_images)
 
-        elif args.stack_method == "ORB":
-            from stacking.stacking import stackImagesKeypointMatching
+            else:
+                print(f"ERROR: method {args.stack_method} not found!")
+                exit(1)
+        except Exception as e:
+            print("ERROR: Could not stack images\n", e)
             
-            # Stack images using ORB keypoint method
-            print("Stacking images using ORB method")
-            image = stackImagesKeypointMatching(numpy_images)
-
-        else:
-            print(f"ERROR: method {args.stack_method} not found!")
-            exit(1)
-        
         processed_image = True
         print(f"Stacked images in {time() - stack_tic} seconds")
 
