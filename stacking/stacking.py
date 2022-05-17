@@ -11,16 +11,14 @@ def stackImagesECCWorker(numpy_array):
     stacked_image = None
 
     for _, image in enumerate(numpy_array):
-        # image = cv2.imread(file, 1).astype(np.float32) / 255
         imageF = image.astype(np.float32) / 255
         if first_image is None:
             # convert to gray scale floating point image
-            # first_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            # stacked_image = image
             first_image = cv2.cvtColor(imageF, cv2.COLOR_BGR2GRAY)
             stacked_image = imageF
         else:
             # Estimate perspective transform
+            print("findtransformecc")
             s, M = cv2.findTransformECC(
                 cv2.cvtColor(imageF, cv2.COLOR_BGR2GRAY),
                 first_image,
@@ -29,6 +27,7 @@ def stackImagesECCWorker(numpy_array):
             )
             w, h, _ = imageF.shape
             # Align image to first image
+            print("warp")
             image_align = cv2.warpPerspective(imageF, M, (h, w))
             stacked_image += image_align
 

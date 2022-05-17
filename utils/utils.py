@@ -51,7 +51,7 @@ def filterLowContrast(numpy_array):
     for i, image in enumerate(numpy_array):
         if is_low_contrast(
             image,
-            fraction_threshold=0.1,
+            fraction_threshold=0.05,
             lower_percentile=10,
             upper_percentile=90,
             method="linear",
