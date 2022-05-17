@@ -59,6 +59,13 @@ def filterLowContrast(numpy_array):
             print(f"Image {i} is low contrast")
         else:
             filtered_array.append(image)
+    
+    # if no filtered images, return original array expect for the first image
+    if len(filtered_array) == 0:
+        print("All images low contrast, skipping first image only")
+        for i in range(1, len(numpy_array)):
+            filtered_array.append(numpy_array[i])
+
     return filtered_array
 
 
