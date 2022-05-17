@@ -64,7 +64,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     processed_image = False
-
     image_folder = args.input_dir
     if not os.path.exists(image_folder):
         print(f"ERROR {image_folder} not found!")
@@ -90,7 +89,7 @@ if __name__ == "__main__":
         for image in numpy_images:
             if args.contrast_method == "histogram_clahe":
                 # equalize all 3 channels with clahe and append that to equalized_images
-                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+                clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
                 equalized_1 = (clahe.apply(image[:, :, 0]))
                 equalized_2 = (clahe.apply(image[:, :, 1]))
                 equalized_3 = (clahe.apply(image[:, :, 2]))
@@ -133,12 +132,17 @@ if __name__ == "__main__":
 
     if args.single_image:
         # Create main image
+        print("Creating main image")
+        main_tic = time()
+
         image = single_image(image, args.input_dir, args.interal_image_extension)
         if args.show:
             cv2.imshow("Image", image)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
-    
+
+        print(f"Created main image in {time()-main_tic} seconds")
+
     if args.denoise_all:
         denoise_all_tic = time()
         
