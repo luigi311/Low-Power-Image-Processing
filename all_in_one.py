@@ -151,19 +151,19 @@ if __name__ == "__main__":
         numpy_images_denoised = []
         
         if args.denoise_all_method == "fast":
-            from denoise.opencv_denoise import fastDenoiseImage
+            from denoise.opencv_denoise.opencv_denoise import fastDenoiseImage
             
             for image in numpy_images:
                 numpy_images_denoised.append(fastDenoiseImage(image, args.denoise_all_amount))
 
         elif args.denoise_all_method == "fddnet":
-            from denoise.fddnet import fddnetDenoiseImage
+            from denoise.fddnet.fddnet import fddnetDenoiseImage
             
             for image in numpy_images:
                 numpy_images_denoised.append(fddnetDenoiseImage(image, args.denoise_all_amount))
 
         elif args.denoise_all_method == "ircnn":
-            from denoise.ircnn import ircnnDenoiseImage
+            from denoise.ircnn.ircnn import ircnnDenoiseImage
 
             for image in numpy_images:
                 numpy_images_denoised.append(ircnnDenoiseImage(image, args.denoise_all_amount))
@@ -206,17 +206,17 @@ if __name__ == "__main__":
         print("Denoise image")
 
         if args.denoise_method == "fast":
-            from denoise.opencv_denoise import fastDenoiseImage
+            from denoise.opencv_denoise.opencv_denoise import fastDenoiseImage
 
             image = fastDenoiseImage(image, args.denoise_amount)
 
         elif args.denoise_method == "fddnet":
-            from denoise.fddnet import fddnetDenoiseImage
+            from denoise.fddnet.fddnet import fddnetDenoiseImage
 
             image = fddnetDenoiseImage(image, args.denoise_amount)
 
         elif args.denoise_method == "ircnn":
-            from denoise.ircnn import ircnnDenoiseImage
+            from denoise.ircnn.ircnn import ircnnDenoiseImage
 
             image = ircnnDenoiseImage(image, args.denoise_amount)
 
