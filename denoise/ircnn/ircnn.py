@@ -3,9 +3,9 @@ import numpy as np
 from pathlib import Path
 
 from utils.utils import downloader
-from denoise.ircnn_models.network_dncnn import IRCNN as net
-from denoise.ircnn_utils import utils_image as ircnn_util
-from denoise.ircnn_utils import utils_model as ircnn_model
+from denoise.ircnn.ircnn_models.network_dncnn import IRCNN as net
+from denoise.ircnn.ircnn_utils import utils_image as ircnn_util
+from denoise.ircnn.ircnn_utils import utils_model as ircnn_model
 
 
 def ircnnDenoiseImage(image, denoise_amount):

@@ -4,6 +4,7 @@ import cv2
 # Align and stack images with ECC method
 # Slower but more accurate
 
+
 def stackImagesECCWorker(numpy_array):
     M = np.eye(3, 3, dtype=np.float32)
 
@@ -35,14 +36,18 @@ def stackImagesECCWorker(numpy_array):
     stacked_image = (stacked_image * 255).astype(np.uint8)
     return stacked_image
 
+
 def stackImagesECC(numpy_array, stacking_amount=3):
     if stacking_amount == 1:
         print("Error: Stacking amount must be greater than 1")
         exit(1)
-    
+
     stacked = []
     # split into chunks of size stacking_amount
-    chunks = [numpy_array[x:x + stacking_amount] for x in range(0, len(numpy_array), stacking_amount)]
+    chunks = [
+        numpy_array[x : x + stacking_amount]
+        for x in range(0, len(numpy_array), stacking_amount)
+    ]
 
     print(len(chunks))
     for chunk in chunks:
@@ -51,13 +56,14 @@ def stackImagesECC(numpy_array, stacking_amount=3):
         else:
             stacked.append(chunk[0])
 
-    #recursively stack images into there is only one image left
+    # recursively stack images into there is only one image left
     while len(stacked) > 1:
         stacked = [stackImagesECC(stacked, stacking_amount)]
 
     if len(stacked) == 1:
         return stacked[0]
-        
+
+
 # Align and stack images by matching ORB keypoints
 # Faster but less accurate
 def stackImagesKeypointMatching(numpy_array):

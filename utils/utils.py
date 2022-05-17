@@ -59,7 +59,7 @@ def filterLowContrast(numpy_array):
             print(f"Image {i} is low contrast")
         else:
             filtered_array.append(image)
-    
+
     # if no filtered images, return original array expect for the first image
     if len(filtered_array) == 0:
         print("All images low contrast, skipping first image only")
@@ -69,19 +69,19 @@ def filterLowContrast(numpy_array):
     return filtered_array
 
 
-
 def fixContrast(image):
     # get darkest and brightest pixel
     min_pixel = np.min(image)
     max_pixel = np.max(image)
 
     # Subtract darkest pixel from all pixels
-    image = image - min_pixel   
+    image = image - min_pixel
 
     # multiply to bring white to max_pixel
     image = image * (max_pixel / 255)
-    
-    return image    
+
+    return image
+
 
 def downloader(url, file_name, directory):
     if not os.path.exists(directory):

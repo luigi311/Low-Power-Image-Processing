@@ -1,5 +1,5 @@
 import torch.nn as nn
-import denoise.ircnn_models.basicblock as B
+import denoise.ircnn.ircnn_models.basicblock as B
 
 
 """

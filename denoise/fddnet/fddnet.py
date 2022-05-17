@@ -2,8 +2,8 @@ import torch, os
 import numpy as np
 from pathlib import Path
 
-from denoise.fddnet_utils import utils_image as fddnet_util
-from denoise.fddnet_models.network_ffdnet import FFDNet as net
+from denoise.fddnet.fddnet_utils import utils_image as fddnet_util
+from denoise.fddnet.fddnet_models.network_ffdnet import FFDNet as net
 from utils.utils import downloader
 
 

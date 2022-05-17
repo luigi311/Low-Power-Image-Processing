@@ -21,13 +21,37 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Process Image")
     parser.add_argument("input_dir", help="Input directory of images")
-    parser.add_argument("--interal_image_extension", default="png", help="Extension of images to process")
+    parser.add_argument(
+        "--interal_image_extension",
+        default="png",
+        help="Extension of images to process",
+    )
     parser.add_argument("--single_image", help="Single image mode", action="store_true")
-    parser.add_argument("--contrast_method", default="none", help="Contrast method to use", choices=["histogram_clahe", "histogram_equalize"])
-    parser.add_argument("--dehaze_method", default="none", help="Dehaze method to use on all images", choices=["none", "darktables"])
-    parser.add_argument("--color_method", default="none", help="Color method to use on final images", choices=["none", "image_adaptive_3dlut"])
+    parser.add_argument(
+        "--contrast_method",
+        default="none",
+        help="Contrast method to use",
+        choices=["histogram_clahe", "histogram_equalize"],
+    )
+    parser.add_argument(
+        "--dehaze_method",
+        default="none",
+        help="Dehaze method to use on all images",
+        choices=["none", "darktables"],
+    )
+    parser.add_argument(
+        "--color_method",
+        default="none",
+        help="Color method to use on final images",
+        choices=["none", "image_adaptive_3dlut"],
+    )
     parser.add_argument("--auto_stack", help="Auto stack images", action="store_true")
-    parser.add_argument("--stack_amount", default=3, type=int, help="Amount of images to stack at a time")
+    parser.add_argument(
+        "--stack_amount",
+        default=3,
+        type=int,
+        help="Amount of images to stack at a time",
+    )
     parser.add_argument(
         "--stack_method",
         help="Stacking method ORB (faster) or ECC (more precise)",
@@ -35,10 +59,23 @@ if __name__ == "__main__":
         default="ECC",
     )
     parser.add_argument("--show", help="Show result image", action="store_true")
-    parser.add_argument("--denoise_all", help="Denoise all images prior to stacking", action="store_true")
-    parser.add_argument("--denoise_all_method", help="Denoise method for all images prior to stacking", choices=["fast", "fddnet", "ircnn"],
-        default="fast",)
-    parser.add_argument("--denoise_all_amount", help="Denoise amount for all images prior to stacking", type=int, default=2)
+    parser.add_argument(
+        "--denoise_all",
+        help="Denoise all images prior to stacking",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--denoise_all_method",
+        help="Denoise method for all images prior to stacking",
+        choices=["fast", "fddnet", "ircnn"],
+        default="fast",
+    )
+    parser.add_argument(
+        "--denoise_all_amount",
+        help="Denoise amount for all images prior to stacking",
+        type=int,
+        default=2,
+    )
     parser.add_argument(
         "--denoise_method",
         help="Denoise image",
@@ -91,34 +128,36 @@ if __name__ == "__main__":
             if args.contrast_method == "histogram_clahe":
                 # equalize all 3 channels with clahe and append that to equalized_images
                 clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
-                equalized_1 = (clahe.apply(image[:, :, 0]))
-                equalized_2 = (clahe.apply(image[:, :, 1]))
-                equalized_3 = (clahe.apply(image[:, :, 2]))
+                equalized_1 = clahe.apply(image[:, :, 0])
+                equalized_2 = clahe.apply(image[:, :, 1])
+                equalized_3 = clahe.apply(image[:, :, 2])
 
             elif args.contrast_method == "histogram_equalize":
                 # equalize all 3 channels individually and append that to equalized_images
-                equalized_1 = (cv2.equalizeHist(image[:, :, 0]))
-                equalized_2 = (cv2.equalizeHist(image[:, :, 1]))
-                equalized_3 = (cv2.equalizeHist(image[:, :, 2]))
-            
+                equalized_1 = cv2.equalizeHist(image[:, :, 0])
+                equalized_2 = cv2.equalizeHist(image[:, :, 1])
+                equalized_3 = cv2.equalizeHist(image[:, :, 2])
+
             else:
                 print("ERROR: Unknown contrast method")
                 exit(1)
 
-            equalized_images.append(numpy.stack((equalized_1, equalized_2, equalized_3), axis=2))
+            equalized_images.append(
+                numpy.stack((equalized_1, equalized_2, equalized_3), axis=2)
+            )
 
         numpy_images = equalized_images
         print(f"Histogram equalized in {time()-equalize_tic} seconds")
 
     if args.dehaze_method != "none":
         dehaze_tic = time()
-        
+
         print("Dehazing images")
         dehazed_images = []
 
         if args.dehaze_method == "darktables":
             from dehaze.darktables.darktables import dehaze_darktables
-            
+
             for image in numpy_images:
                 dehazed_images.append(dehaze_darktables(image))
 
@@ -146,27 +185,33 @@ if __name__ == "__main__":
 
     if args.denoise_all:
         denoise_all_tic = time()
-        
+
         print("Denoise all image")
         numpy_images_denoised = []
-        
+
         if args.denoise_all_method == "fast":
             from denoise.opencv_denoise.opencv_denoise import fastDenoiseImage
-            
+
             for image in numpy_images:
-                numpy_images_denoised.append(fastDenoiseImage(image, args.denoise_all_amount))
+                numpy_images_denoised.append(
+                    fastDenoiseImage(image, args.denoise_all_amount)
+                )
 
         elif args.denoise_all_method == "fddnet":
             from denoise.fddnet.fddnet import fddnetDenoiseImage
-            
+
             for image in numpy_images:
-                numpy_images_denoised.append(fddnetDenoiseImage(image, args.denoise_all_amount))
+                numpy_images_denoised.append(
+                    fddnetDenoiseImage(image, args.denoise_all_amount)
+                )
 
         elif args.denoise_all_method == "ircnn":
             from denoise.ircnn.ircnn import ircnnDenoiseImage
 
             for image in numpy_images:
-                numpy_images_denoised.append(ircnnDenoiseImage(image, args.denoise_all_amount))
+                numpy_images_denoised.append(
+                    ircnnDenoiseImage(image, args.denoise_all_amount)
+                )
 
         else:
             print(f"ERROR: method {args.denoise_method} not found!")
@@ -187,7 +232,7 @@ if __name__ == "__main__":
 
             elif args.stack_method == "ORB":
                 from stacking.stacking import stackImagesKeypointMatching
-                
+
                 # Stack images using ORB keypoint method
                 print("Stacking images using ORB method")
                 image = stackImagesKeypointMatching(numpy_images)
@@ -197,7 +242,7 @@ if __name__ == "__main__":
                 exit(1)
         except Exception as e:
             print("ERROR: Could not stack images\n", e)
-            
+
         processed_image = True
         print(f"Stacked images in {time() - stack_tic} seconds")
 
@@ -232,9 +277,11 @@ if __name__ == "__main__":
         print("Color adjusting image")
 
         if args.color_method == "image_adaptive_3dlut":
-            from color.image_adaptive_3dlut.image_adaptive_3dlut import image_adaptive_3dlut
-            
-            image = image_adaptive_3dlut(image,"sRGB")
+            from color.image_adaptive_3dlut.image_adaptive_3dlut import (
+                image_adaptive_3dlut,
+            )
+
+            image = image_adaptive_3dlut(image, "sRGB")
 
         else:
             print(f"ERROR: method {args.color_method} not found!")
@@ -256,6 +303,8 @@ if __name__ == "__main__":
         print(f"Super resolution image in {time()-super_tic} seconds")
 
     if processed_image:
-        output_image = os.path.join(args.input_dir, f"main_processed.{args.interal_image_extension}")
+        output_image = os.path.join(
+            args.input_dir, f"main_processed.{args.interal_image_extension}"
+        )
         print(f"Saved {output_image}")
         cv2.imwrite(output_image, image)

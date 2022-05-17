@@ -1,6 +1,6 @@
 import numpy as np
 import torch.nn as nn
-import denoise.fddnet_models.basicblock as B
+import denoise.fddnet.fddnet_models.basicblock as B
 import torch
 
 """
