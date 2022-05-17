@@ -57,10 +57,7 @@ def stackImagesECC(numpy_array, stacking_amount=3):
         stacked = [stackImagesECC(stacked, stacking_amount)]
 
     if len(stacked) == 1:
-        #convert stacked to numpy array
-        stacked = np.array(stacked[0])
-
-    return stacked
+        return stacked[0]
         
 # Align and stack images by matching ORB keypoints
 # Faster but less accurate
