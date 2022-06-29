@@ -12,21 +12,22 @@ def single_image(images, input_dir, image_extension="png"):
         image = images[1]
     else:
         image = images[0]
-    
+
     output_image = os.path.join(input_dir, f"main.{image_extension}")
     print(f"Saved {output_image}")
     cv2.imwrite(output_image, image)
 
     return image
 
+
 def histogram_processing(image, contrast_method):
-    yuv_image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+    yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
 
     if contrast_method == "histogram_clahe":
         # equalize with clahe
         clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
         yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
-        
+
     elif contrast_method == "histogram_equalize":
         # equalize with equalizeHist
         yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
@@ -35,7 +36,7 @@ def histogram_processing(image, contrast_method):
         print("ERROR: Unknown contrast method")
         exit(1)
 
-    return cv2.cvtColor(yuv_image, cv2.COLOR_YUV2BGR)
+    return cv2.cvtColor(yuv_image, cv2.COLOR_YUV2RGB)
 
 
 # ===== MAIN =====

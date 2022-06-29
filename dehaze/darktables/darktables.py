@@ -60,7 +60,7 @@ def Guidedfilter(im, p, r, eps):
 
 
 def TransmissionRefine(im, et):
-    gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
     gray = np.float64(gray) / 255
     r = 60
     eps = 0.0001

@@ -15,13 +15,13 @@ def stackImagesECCWorker(numpy_array):
         imageF = image.astype(np.float32) / 255
         if first_image is None:
             # convert to gray scale floating point image
-            first_image = cv2.cvtColor(imageF, cv2.COLOR_BGR2GRAY)
+            first_image = cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY)
             stacked_image = imageF
         else:
             # Estimate perspective transform
             print("findtransformecc")
             s, M = cv2.findTransformECC(
-                cv2.cvtColor(imageF, cv2.COLOR_BGR2GRAY),
+                cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY),
                 first_image,
                 M,
                 cv2.MOTION_HOMOGRAPHY,
