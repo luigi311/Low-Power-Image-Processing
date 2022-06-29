@@ -15,6 +15,24 @@ def single_image(image, input_dir, image_extension="png"):
 
     return image
 
+def histogram_processing(image, contrast_method):
+    yuv_image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+
+    if contrast_method == "histogram_clahe":
+        # equalize with clahe
+        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+        yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
+        
+    elif contrast_method == "histogram_equalize":
+        # equalize with equalizeHist
+        yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
+
+    else:
+        print("ERROR: Unknown contrast method")
+        exit(1)
+
+    return cv2.cvtColor(yuv_image, cv2.COLOR_YUV2BGR)
+
 
 # ===== MAIN =====
 if __name__ == "__main__":
@@ -125,26 +143,7 @@ if __name__ == "__main__":
         equalize_tic = time()
 
         for image in numpy_images:
-            if args.contrast_method == "histogram_clahe":
-                # equalize all 3 channels with clahe and append that to equalized_images
-                clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
-                equalized_1 = clahe.apply(image[:, :, 0])
-                equalized_2 = clahe.apply(image[:, :, 1])
-                equalized_3 = clahe.apply(image[:, :, 2])
-
-            elif args.contrast_method == "histogram_equalize":
-                # equalize all 3 channels individually and append that to equalized_images
-                equalized_1 = cv2.equalizeHist(image[:, :, 0])
-                equalized_2 = cv2.equalizeHist(image[:, :, 1])
-                equalized_3 = cv2.equalizeHist(image[:, :, 2])
-
-            else:
-                print("ERROR: Unknown contrast method")
-                exit(1)
-
-            equalized_images.append(
-                numpy.stack((equalized_1, equalized_2, equalized_3), axis=2)
-            )
+            equalized_images.append(histogram_processing(image, args.contrast_method))
 
         numpy_images = equalized_images
         print(f"Histogram equalized in {time()-equalize_tic} seconds")
