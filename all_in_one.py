@@ -3,12 +3,16 @@ import argparse, os, cv2
 import numpy
 from time import time
 
-from utils.utils import createNumpyArray, filterLowContrast, fixContrast
+from utils.utils import createNumpyArray, filterLowContrast
 
 # Create main and do any processing if needed
-def single_image(image, input_dir, image_extension="png"):
-    print(f"Processing single image")
-    image = fixContrast(image)
+def single_image(images, input_dir, image_extension="png"):
+    # Default to second image if exists if not first
+    if len(images) > 1:
+        image = images[1]
+    else:
+        image = images[0]
+    
     output_image = os.path.join(input_dir, f"main.{image_extension}")
     print(f"Saved {output_image}")
     cv2.imwrite(output_image, image)
@@ -136,6 +140,19 @@ if __name__ == "__main__":
 
     print(f"Loaded {len(numpy_images)} images in {time()-loading_tic} seconds")
 
+    if args.single_image:
+        # Create main image
+        print("Creating main image")
+        main_tic = time()
+
+        image = single_image(numpy_images, args.input_dir, args.interal_image_extension)
+        if args.show:
+            cv2.imshow("Image", image)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+        print(f"Created main image in {time()-main_tic} seconds")
+
     if args.contrast_method != "none":
         equalized_images = []
 
@@ -162,25 +179,6 @@ if __name__ == "__main__":
 
         print(f"Dehazed {len(dehazed_images)} images in {time()-dehaze_tic} seconds")
         numpy_images = dehazed_images
-
-    # Default to second image if exists if not first
-    if len(numpy_images) > 1:
-        image = numpy_images[1]
-    else:
-        image = numpy_images[0]
-
-    if args.single_image:
-        # Create main image
-        print("Creating main image")
-        main_tic = time()
-
-        image = single_image(image, args.input_dir, args.interal_image_extension)
-        if args.show:
-            cv2.imshow("Image", image)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-
-        print(f"Created main image in {time()-main_tic} seconds")
 
     if args.denoise_all:
         denoise_all_tic = time()
