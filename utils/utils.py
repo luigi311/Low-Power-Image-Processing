@@ -25,7 +25,7 @@ def process_raw(dng_file):
 
 
 # Create a numpy array for all the dng images in the folder
-def createNumpyArray(path):
+def loadImages(path):
     file_list = os.listdir(path)
     dng_file_list = [os.path.join(path, x) for x in file_list if x.endswith(".dng")]
 

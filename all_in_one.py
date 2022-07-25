@@ -3,7 +3,7 @@ import argparse, os, cv2
 import numpy
 from time import time
 
-from utils.utils import createNumpyArray, filterLowContrast
+from utils.utils import loadImages, filterLowContrast
 
 # Create main and do any processing if needed
 def single_image(images, input_dir, image_extension="png"):
@@ -145,7 +145,7 @@ if __name__ == "__main__":
         image_folder = image_folder[:-1]
 
     loading_tic = time()
-    numpy_images = createNumpyArray(image_folder)
+    numpy_images = loadImages(image_folder)
 
     print("Filtering low contrast images")
     numpy_images = filterLowContrast(numpy_images)
