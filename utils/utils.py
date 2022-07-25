@@ -2,6 +2,7 @@ import rawpy, cv2, os
 import numpy as np
 from skimage.exposure import is_low_contrast
 from requests import get
+from concurrent.futures import ThreadPoolExecutor
 
 
 def process_raw(dng_file):
@@ -28,20 +29,13 @@ def createNumpyArray(path):
     file_list = os.listdir(path)
     dng_file_list = [os.path.join(path, x) for x in file_list if x.endswith(".dng")]
 
-    # Read image to get dimensions
-    second_image = process_raw(dng_file_list[1])
-    h, w, _ = second_image.shape
-
     # Create numpy array
-    numpy_array = np.zeros((len(dng_file_list), h, w, 3), dtype=np.uint8)
+    numpy_array = []
 
     # Read all images into numpy array
-    for i, file in enumerate(dng_file_list):
-        if i == 1:
-            numpy_array[i] = second_image
-        else:
-            numpy_array[i] = process_raw(file)
-
+    for file in dng_file_list:
+        numpy_array.append(process_raw(file))
+        
     return numpy_array
 
 
@@ -92,3 +86,25 @@ def downloader(url, file_name, directory):
         response = get(url)
         # write to file
         file.write(response.content)
+
+
+def future_thread_executor(args: list, workers: int = -1):
+    futures_list = []
+    results = []
+
+    if workers == -1:
+        workers = os.cpu_count()
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        for arg in args:
+            # * arg unpacks the list into actual arguments
+            futures_list.append(executor.submit(*arg))
+
+        for future in futures_list:
+            try:
+                result = future.result()
+                results.append(result)
+            except Exception as e:
+                raise Exception(e)
+
+    return results
