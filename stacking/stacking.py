@@ -14,11 +14,11 @@ def stackImagesECCWorker(numpy_array):
         if first_image is None:
             # convert to gray scale floating point image
             first_image = cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY)
+
             stacked_image = imageF
         else:
             # Estimate perspective transform
-            print("findtransformecc")
-            s, M = cv2.findTransformECC(
+            _, M = cv2.findTransformECC(
                 cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY),
                 first_image,
                 M,
@@ -26,7 +26,6 @@ def stackImagesECCWorker(numpy_array):
             )
             w, h, _ = imageF.shape
             # Align image to first image
-            print("warp")
             image_align = cv2.warpPerspective(imageF, M, (h, w))
             stacked_image += image_align
 
@@ -47,7 +46,6 @@ def stackImagesECC(numpy_array, stacking_amount=3):
         for x in range(0, len(numpy_array), stacking_amount)
     ]
 
-    print(len(chunks))
     for chunk in chunks:
         if len(chunk) > 1:
             stacked.append(stackImagesECCWorker(chunk))
@@ -113,9 +111,12 @@ def stackImagesKeypointMatching(numpy_array):
 
 
 def stacker(numpy_array, stacking_amount=3, method="ECC"):
-    if method == "ECC":
-        return stackImagesECC(numpy_array, stacking_amount)
-    elif method == "ORB":
-        return stackImagesKeypointMatching(numpy_array)
-    else:
-        raise Exception(f"Error: Stacking method {method} not supported")
+    try:
+        if method == "ECC":
+            return stackImagesECC(numpy_array, stacking_amount)
+        elif method == "ORB":
+            return stackImagesKeypointMatching(numpy_array)
+        else:
+            raise Exception(f"Stacking Error: Stacking method {method} not supported")
+    except Exception as e:
+        raise Exception(f"Stacking Error: {e}")

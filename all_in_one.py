@@ -39,6 +39,14 @@ def histogram_processing(image, contrast_method):
     return cv2.cvtColor(yuv_image, cv2.COLOR_YUV2RGB)
 
 
+def shrink_images(numpy_array):
+    print("Shrinking images")
+    # Shrink images to half size
+    for i, image in enumerate(numpy_array):
+        numpy_array[i] = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
+
+    return numpy_array
+
 # ===== MAIN =====
 if __name__ == "__main__":
 
@@ -122,6 +130,9 @@ if __name__ == "__main__":
         type=int,
         default=2,
     )
+    parser.add_argument(
+        "--shrink_images", help="Shrink image", action="store_true"
+    )
     args = parser.parse_args()
 
     processed_image = False
@@ -153,6 +164,9 @@ if __name__ == "__main__":
             cv2.destroyAllWindows()
 
         print(f"Created main image in {time()-main_tic} seconds")
+
+    if args.shrink_images:
+        numpy_images = shrink_images(numpy_images)
 
     if args.contrast_method != "none":
         equalized_images = []
@@ -252,6 +266,18 @@ if __name__ == "__main__":
         super_tic = time()
         image = super_resolution(
             image, args.super_resolution_method, args.super_resolution_scale
+        )
+
+        processed_image = True
+        print(f"Super resolution image in {time()-super_tic} seconds")
+
+    if args.shrink_images:
+        from super_resolution.super_resolution import super_resolution
+
+        print("Resize shrunk image")
+        super_tic = time()
+        image = super_resolution(
+            image, args.super_resolution_method, 2
         )
 
         processed_image = True
