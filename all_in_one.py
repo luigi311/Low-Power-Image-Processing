@@ -182,93 +182,50 @@ if __name__ == "__main__":
         numpy_images = dehazed_images
 
     if args.denoise_all:
-        denoise_all_tic = time()
+        try:
+            denoise_all_tic = time()
 
-        print("Denoise all image")
-        numpy_images_denoised = []
+            numpy_images_denoised = []
 
-        if args.denoise_all_method == "fast":
-            from denoise.opencv_denoise.opencv_denoise import fastDenoiseImage
-
-            for image in numpy_images:
-                numpy_images_denoised.append(
-                    fastDenoiseImage(image, args.denoise_all_amount)
-                )
-
-        elif args.denoise_all_method == "fddnet":
-            from denoise.fddnet.fddnet import fddnetDenoiseImage
+            from denoise.denoise import denoiser
 
             for image in numpy_images:
                 numpy_images_denoised.append(
-                    fddnetDenoiseImage(image, args.denoise_all_amount)
+                    denoiser(image, method=args.denoise_all_method, amount=args.denoise_all_amount)
                 )
 
-        elif args.denoise_all_method == "ircnn":
-            from denoise.ircnn.ircnn import ircnnDenoiseImage
+            numpy_images = numpy_images_denoised
+            print(f"Denoised all images in {time()-denoise_all_tic} seconds")
 
-            for image in numpy_images:
-                numpy_images_denoised.append(
-                    ircnnDenoiseImage(image, args.denoise_all_amount)
-                )
-
-        else:
-            print(f"ERROR: method {args.denoise_method} not found!")
-            exit(1)
-
-        numpy_images = numpy_images_denoised
-        print(f"Denoised all images in {time()-denoise_all_tic} seconds")
+        except Exception as e:
+            print("ERROR: Could not denoise all images\n", e)
 
     if args.auto_stack:
-        stack_tic = time()
         try:
-            if args.stack_method == "ECC":
-                from stacking.stacking import stackImagesECC
+            stack_tic = time()
 
-                # Stack images using ECC method
-                print("Stacking images using ECC method")
-                image = stackImagesECC(numpy_images, args.stack_amount)
+            from stacking.stacking import stacker
+            image = stacker(numpy_images, args.stack_amount, args.stack_method)
 
-            elif args.stack_method == "ORB":
-                from stacking.stacking import stackImagesKeypointMatching
+            processed_image = True
+            print(f"Stacked images in {time() - stack_tic} seconds")
 
-                # Stack images using ORB keypoint method
-                print("Stacking images using ORB method")
-                image = stackImagesKeypointMatching(numpy_images)
-
-            else:
-                print(f"ERROR: method {args.stack_method} not found!")
-                exit(1)
         except Exception as e:
-            print("ERROR: Could not stack images\n", e)
+            print(f"ERROR: Could not stack images {e}")
 
-        processed_image = True
-        print(f"Stacked images in {time() - stack_tic} seconds")
 
     if args.denoise_method != "none":
-        denoise_tic = time()
-        print("Denoise image")
+        try:
+            denoise_tic = time()
 
-        if args.denoise_method == "fast":
-            from denoise.opencv_denoise.opencv_denoise import fastDenoiseImage
+            from denoise.denoise import denoiser
+            denoiser(image, args.denoise_method, args.denoise_amount)
 
-            image = fastDenoiseImage(image, args.denoise_amount)
+            processed_image = True
+            print(f"Denoised image in {time()-denoise_tic} seconds")
 
-        elif args.denoise_method == "fddnet":
-            from denoise.fddnet.fddnet import fddnetDenoiseImage
-
-            image = fddnetDenoiseImage(image, args.denoise_amount)
-
-        elif args.denoise_method == "ircnn":
-            from denoise.ircnn.ircnn import ircnnDenoiseImage
-
-            image = ircnnDenoiseImage(image, args.denoise_amount)
-
-        else:
-            print(f"ERROR: method {args.denoise_method} not found!")
-            exit(1)
-
-        processed_image = True
-        print(f"Denoised image in {time()-denoise_tic} seconds")
+        except Exception as e:
+            print("ERROR: Could not denoise image\n", e)
 
     if args.color_method != "none":
         color_tic = time()

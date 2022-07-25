@@ -3,8 +3,6 @@ import cv2
 
 # Align and stack images with ECC method
 # Slower but more accurate
-
-
 def stackImagesECCWorker(numpy_array):
     M = np.eye(3, 3, dtype=np.float32)
 
@@ -67,7 +65,6 @@ def stackImagesECC(numpy_array, stacking_amount=3):
 # Align and stack images by matching ORB keypoints
 # Faster but less accurate
 def stackImagesKeypointMatching(numpy_array):
-
     orb = cv2.ORB_create()
 
     # disable OpenCL to because of bug in ORB in OpenCV 3.1
@@ -111,4 +108,14 @@ def stackImagesKeypointMatching(numpy_array):
 
     stacked_image /= len(numpy_array)
     stacked_image = (stacked_image * 255).astype(np.uint8)
+
     return stacked_image
+
+
+def stacker(numpy_array, stacking_amount=3, method="ECC"):
+    if method == "ECC":
+        return stackImagesECC(numpy_array, stacking_amount)
+    elif method == "ORB":
+        return stackImagesKeypointMatching(numpy_array)
+    else:
+        raise Exception(f"Error: Stacking method {method} not supported")

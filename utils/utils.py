@@ -35,7 +35,7 @@ def createNumpyArray(path):
     # Read all images into numpy array
     for file in dng_file_list:
         numpy_array.append(process_raw(file))
-        
+
     return numpy_array
 
 
