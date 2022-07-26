@@ -128,7 +128,7 @@ def conv(
 # --------------------------------------------
 # inverse of pixel_shuffle
 # --------------------------------------------
-def pixel_unshuffle(input, upscale_factor):
+def pixel_unshuffle(input_pixel, upscale_factor):
     r"""Rearranges elements in a Tensor of shape :math:`(C, rH, rW)` to a
     tensor of shape :math:`(*, r^2C, H, W)`.
 
@@ -139,12 +139,12 @@ def pixel_unshuffle(input, upscale_factor):
     Date:
         01/Jan/2019
     """
-    batch_size, channels, in_height, in_width = input.size()
+    batch_size, channels, in_height, in_width = input_pixel.size()
 
     out_height = in_height // upscale_factor
     out_width = in_width // upscale_factor
 
-    input_view = input.contiguous().view(
+    input_view = input_pixel.contiguous().view(
         batch_size, channels, out_height, upscale_factor, out_width, upscale_factor
     )
 

@@ -20,6 +20,7 @@ def process_raw(dng_file):
             highlight_mode=rawpy.HighlightMode(2),
             fbdd_noise_reduction=rawpy.FBDDNoiseReductionMode(0),
         )
+
         rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
 
         return rgb

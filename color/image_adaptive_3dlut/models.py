@@ -1,11 +1,6 @@
 import torch.nn as nn
-import torch.nn.functional as F
 import torchvision.models as models
-import torchvision.transforms as transforms
-from torch.autograd import Variable
 import torch
-import numpy as np
-import math
 from pathlib import Path
 
 

@@ -1,6 +1,4 @@
 import argparse, os, cv2
-
-import numpy
 from time import time
 
 from utils.utils import loadImages, filterLowContrast
