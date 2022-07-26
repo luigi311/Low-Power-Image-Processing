@@ -9,18 +9,19 @@ def process_raw(dng_file):
     with rawpy.imread(dng_file) as raw:
         rgb = raw.postprocess(
             demosaic_algorithm=rawpy.DemosaicAlgorithm.AHD,
-            use_camera_wb=True,
+            use_auto_wb=True,
             half_size=False,
             no_auto_bright=False,
             auto_bright_thr=0.01,
             no_auto_scale=False,
             output_color=rawpy.ColorSpace.sRGB,
             output_bps=8,
-            gamma=(2.222, 4.5),
-            highlight_mode=rawpy.HighlightMode(5),
+            gamma=(1, 1),
+            highlight_mode=rawpy.HighlightMode(2),
             fbdd_noise_reduction=rawpy.FBDDNoiseReductionMode(0),
         )
         rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
+
         return rgb
 
 

@@ -4,35 +4,60 @@ import cv2
 # Align and stack images with ECC method
 # Slower but more accurate
 def stackImagesECCWorker(numpy_array):
-    M = np.eye(3, 3, dtype=np.float32)
+    warp_mode = cv2.MOTION_HOMOGRAPHY
+    warp_matrix = np.eye(3, 3, dtype=np.float32)
+    
+    # Specify the number of iterations.
+    number_of_iterations = 5
+
+    # Specify the threshold of the increment
+    # in the correlation coefficient between two iterations
+    termination_eps = 1e-10
+
+    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, number_of_iterations,  termination_eps)
 
     first_image = None
-    stacked_image = None
+    stacked_images = None
+
+    first_image_shrunk = None
+
+    w, h, _ = numpy_array[0].shape
+
+    shrink_factor = 0.6
+
+    if min(w,h) < 1080:
+        shrink_factor = 1
 
     for _, image in enumerate(numpy_array):
         imageF = image.astype(np.float32) / 255
+        shrunk_image = cv2.resize(image, (0, 0), fx=shrink_factor, fy=shrink_factor)
+        shrunk_image = shrunk_image.astype(np.float32) / 255
+
         if first_image is None:
             # convert to gray scale floating point image
             first_image = cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY)
+            first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
 
-            stacked_image = imageF
+            stacked_images = imageF
         else:
             # Estimate perspective transform
-            _, M = cv2.findTransformECC(
-                cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY),
-                first_image,
-                M,
-                cv2.MOTION_HOMOGRAPHY,
+            _, warp_matrix = cv2.findTransformECC(
+                first_image_shrunk,
+                cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY),
+                warp_matrix,
+                warp_mode,
+                criteria,
             )
-            w, h, _ = imageF.shape
+            
             # Align image to first image
-            image_align = cv2.warpPerspective(imageF, M, (h, w))
-            stacked_image += image_align
+            image_align = cv2.warpPerspective(imageF, warp_matrix, (h, w), flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
+            stacked_images += image_align
 
-    stacked_image /= len(numpy_array)
-    stacked_image = (stacked_image * 255).astype(np.uint8)
+    stacked_images /= len(numpy_array)
+
+    stacked_image = (stacked_images * 255).astype(np.uint8)
+    
     return stacked_image
-
 
 def stackImagesECC(numpy_array, stacking_amount=3):
     if stacking_amount == 1:

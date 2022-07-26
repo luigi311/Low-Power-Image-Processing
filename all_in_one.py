@@ -108,10 +108,15 @@ if __name__ == "__main__":
         default=2,
     )
     parser.add_argument(
+        "--denoise",
+        help="Denoise image",
+        action="store_true",
+    )
+    parser.add_argument(
         "--denoise_method",
         help="Denoise image",
         choices=["fast", "fddnet", "ircnn", "none"],
-        default="none",
+        default="fast",
     )
     parser.add_argument("--denoise_amount", help="Denoise amount", type=int, default=2)
     parser.add_argument(
@@ -228,7 +233,7 @@ if __name__ == "__main__":
             print(f"ERROR: Could not stack images {e}")
 
 
-    if args.denoise_method != "none":
+    if args.denoise:
         try:
             denoise_tic = time()
 
