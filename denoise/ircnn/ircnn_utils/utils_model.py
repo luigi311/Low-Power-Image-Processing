@@ -216,11 +216,11 @@ def test_x8(model, L, modulo=1, sf=1):
         test_pad(model, util.augment_img_tensor4(L, mode=i), modulo=modulo, sf=sf)
         for i in range(8)
     ]
-    for i in range(len(E_list)):
+    for i, item in enumerate(E_list)):
         if i == 3 or i == 5:
-            E_list[i] = util.augment_img_tensor4(E_list[i], mode=8 - i)
+            item = util.augment_img_tensor4(item, mode=8 - i)
         else:
-            E_list[i] = util.augment_img_tensor4(E_list[i], mode=i)
+            item = util.augment_img_tensor4(item, mode=i)
     output_cat = torch.stack(E_list, dim=0)
     E = output_cat.mean(dim=0, keepdim=False)
     return E
@@ -338,19 +338,13 @@ def describe_params(model):
     if isinstance(model, torch.nn.DataParallel):
         model = model.module
     msg = "\n"
-    msg += (
-        " | {:^6s} | {:^6s} | {:^6s} | {:^6s} || {:<20s}".format(
-            "mean", "min", "max", "std", "shape", "param_name"
-        )
-        + "\n"
-    )
+    msg += f" | {'mean':^6s} | {'min':^6s} | {'max':^6s} | {'std':^6s} | {'shape':^6s} || {'param_name':<20s}\n"
+        
     for name, param in model.state_dict().items():
         if not "num_batches_tracked" in name:
             v = param.data.clone().float()
-            msg += (
-                f" | {v.mean():>6.3f} | {v.min():>6.3f} | {v.max():>6.3f} | {v.std():>6.3f} | {v.shape} || {name}"
-                + "\n"
-            )
+            msg += f" | {v.mean():>6.3f} | {v.min():>6.3f} | {v.max():>6.3f} | {v.std():>6.3f} | {v.shape} || {name}\n"
+
     return msg
 
 

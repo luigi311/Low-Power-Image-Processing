@@ -543,7 +543,7 @@ def modcrop(img_in, scale):
         H_r, W_r = H % scale, W % scale
         img = img[: H - H_r, : W - W_r]
     elif img.ndim == 3:
-        H, W, C = img.shape
+        H, W, _ = img.shape
         H_r, W_r = H % scale, W % scale
         img = img[: H - H_r, : W - W_r, :]
     else:

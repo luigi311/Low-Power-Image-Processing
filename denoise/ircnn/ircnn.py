@@ -20,9 +20,7 @@ def ircnnDenoiseImage(image, denoise_amount):
         24, int(np.ceil(noise_level_img / 2) - 1)
     )  # current_idx+1 th denoiser
     url = f"https://github.com/cszn/KAIR/releases/download/v1.0/{model_name}.pth"
-
-    task_current = "dn"  # fixed, 'dn' for denoising | 'sr' for super-resolution
-    sf = 1  # unused for denoising
+    
     if "color" in model_name:
         n_channels = 3  # fixed, 1 for grayscale image, 3 for color image
     else:
