@@ -10,6 +10,19 @@ on:
       - "*.md"
   
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: docker.io/luigi311/low-power-image-processing-base-image:latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          chmod +x download_models.txt
+          ./download_models.txt
+
+
   docker:
     runs-on: ubuntu-latest
     steps:
@@ -21,12 +34,11 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         if: "${{ env.DOCKERHUB_USERNAME != '' }}"
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/low-power-image-processing # list of Docker images to use as base name for tags
-          flavor: |
-            latest=true
           tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
