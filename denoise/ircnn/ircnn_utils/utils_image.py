@@ -1,7 +1,6 @@
 import os
 import math
 import random
-import argparse
 
 import numpy as np
 import torch
@@ -133,7 +132,7 @@ def imssave(imgs, img_path):
     """
     imgs: list, N images of size WxHxC
     """
-    img_name, ext = os.path.splitext(os.path.basename(img_path))
+    img_name = os.path.splitext(os.path.basename(img_path))[0]
     for i, img in enumerate(imgs):
         if img.ndim == 3:
             img = img[:, :, [2, 1, 0]]
@@ -545,7 +544,7 @@ def modcrop(img_in, scale):
         H_r, W_r = H % scale, W % scale
         img = img[: H - H_r, : W - W_r]
     elif img.ndim == 3:
-        H, W, C = img.shape
+        H, W, _ = img.shape
         H_r, W_r = H % scale, W % scale
         img = img[: H - H_r, : W - W_r, :]
     else:

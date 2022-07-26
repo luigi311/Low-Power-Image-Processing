@@ -251,11 +251,11 @@ class Classifier_unpaired(nn.Module):
 class Generator3DLUT_identity(nn.Module):
     def __init__(self, dim=33):
         super(Generator3DLUT_identity, self).__init__()
-        dir = Path(__file__).parent.absolute()
+        dir_path = Path(__file__).parent.absolute()
         if dim == 33:
-            file = open(f"{dir}/IdentityLUT33.txt", "r")
+            file = open(f"{dir_path}/IdentityLUT33.txt", "r")
         elif dim == 64:
-            file = open(f"{dir}/IdentityLUT64.txt", "r")
+            file = open(f"{dir_path}/IdentityLUT64.txt", "r")
         LUT = file.readlines()
         self.LUT = torch.zeros(3, dim, dim, dim, dtype=torch.float)
 

@@ -121,7 +121,7 @@ def conv(
         elif t == "A":
             L.append(nn.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=0))
         else:
-            raise NotImplementedError("Undefined type: ".format(t))
+            raise NotImplementedError(f"Undefined type: {t}")
     return sequential(*L)
 
 
@@ -169,8 +169,8 @@ class PixelUnShuffle(nn.Module):
         super(PixelUnShuffle, self).__init__()
         self.upscale_factor = upscale_factor
 
-    def forward(self, input):
-        return pixel_unshuffle(input, self.upscale_factor)
+    def forward(self, input_forward):
+        return pixel_unshuffle(input_forward, self.upscale_factor)
 
     def extra_repr(self):
         return "upscale_factor={}".format(self.upscale_factor)

@@ -1,7 +1,7 @@
 import torch
 from pathlib import Path
 
-from color.image_adaptive_3dlut.models import *
+from color.image_adaptive_3dlut.models import Generator3DLUT_identity, Generator3DLUT_zero, Classifier
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 
@@ -25,7 +25,6 @@ def image_adaptive_3dlut(image, input_color_space):
     # LUT3 = Generator3DLUT_zero()
     # LUT4 = Generator3DLUT_zero()
     classifier = Classifier()
-    trilinear_ = TrilinearInterpolation()
 
     if cuda:
         LUT0 = LUT0.cuda()
