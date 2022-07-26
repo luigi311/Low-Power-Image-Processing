@@ -11,7 +11,7 @@ def process_raw(dng_file):
             demosaic_algorithm=rawpy.DemosaicAlgorithm.AHD,
             use_auto_wb=True,
             half_size=False,
-            no_auto_bright=False,
+            no_auto_bright=True,
             auto_bright_thr=0.01,
             no_auto_scale=False,
             output_color=rawpy.ColorSpace.sRGB,
