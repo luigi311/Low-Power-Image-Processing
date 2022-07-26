@@ -4,14 +4,17 @@ def denoiser(image, method, amount):
 
         if method == "fast":
             from denoise.opencv_denoise.opencv_denoise import fastDenoiseImage
+
             image = fastDenoiseImage(image, amount)
 
         elif method == "fddnet":
             from denoise.fddnet.fddnet import fddnetDenoiseImage
+
             image = fddnetDenoiseImage(image, amount)
 
         elif method == "ircnn":
             from denoise.ircnn.ircnn import ircnnDenoiseImage
+
             image = ircnnDenoiseImage(image, amount)
 
         else:

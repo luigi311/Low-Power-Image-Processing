@@ -45,6 +45,7 @@ def shrink_images(numpy_array):
 
     return numpy_array
 
+
 # ===== MAIN =====
 if __name__ == "__main__":
 
@@ -133,9 +134,7 @@ if __name__ == "__main__":
         type=int,
         default=2,
     )
-    parser.add_argument(
-        "--shrink_images", help="Shrink image", action="store_true"
-    )
+    parser.add_argument("--shrink_images", help="Shrink image", action="store_true")
     args = parser.parse_args()
 
     processed_image = False
@@ -208,7 +207,11 @@ if __name__ == "__main__":
 
             for image in numpy_images:
                 numpy_images_denoised.append(
-                    denoiser(image, method=args.denoise_all_method, amount=args.denoise_all_amount)
+                    denoiser(
+                        image,
+                        method=args.denoise_all_method,
+                        amount=args.denoise_all_amount,
+                    )
                 )
 
             numpy_images = numpy_images_denoised
@@ -222,6 +225,7 @@ if __name__ == "__main__":
             stack_tic = time()
 
             from stacking.stacking import stacker
+
             image = stacker(numpy_images, args.stack_amount, args.stack_method)
 
             processed_image = True
@@ -230,12 +234,12 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"ERROR: Could not stack images {e}")
 
-
     if args.denoise:
         try:
             denoise_tic = time()
 
             from denoise.denoise import denoiser
+
             denoiser(image, args.denoise_method, args.denoise_amount)
 
             processed_image = True
@@ -279,9 +283,7 @@ if __name__ == "__main__":
 
         print("Resize shrunk image")
         super_tic = time()
-        image = super_resolution(
-            image, args.super_resolution_method, 2
-        )
+        image = super_resolution(image, args.super_resolution_method, 2)
 
         processed_image = True
         print(f"Super resolution image in {time()-super_tic} seconds")

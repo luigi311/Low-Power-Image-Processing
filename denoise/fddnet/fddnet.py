@@ -35,9 +35,6 @@ def fddnetDenoiseImage(image, denoise_amount):
     else:
         use_clip = False
 
-    border = (
-        sf if task_current == "sr" else 0
-    )  # shave boader to calculate PSNR and SSIM
     model_dir = Path(__file__).parent.absolute()
     model_path = os.path.join(model_dir, model_name + ".pth")
 

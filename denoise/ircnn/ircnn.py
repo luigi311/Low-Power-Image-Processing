@@ -28,9 +28,6 @@ def ircnnDenoiseImage(image, denoise_amount):
     else:
         n_channels = 1  # fixed for grayscale image
 
-    border = (
-        sf if task_current == "sr" else 0
-    )  # shave boader to calculate PSNR and SSIM
     model_dir = Path(__file__).parent.absolute()
     model_path = os.path.join(model_dir, model_name + ".pth")
 
@@ -52,7 +49,6 @@ def ircnnDenoiseImage(image, denoise_amount):
     for _, v in model.named_parameters():
         v.requires_grad = False
     model = model.to(device)
-    number_parameters = sum(map(lambda x: x.numel(), model.parameters()))
 
     # ------------------------------------
     # (1) img_L

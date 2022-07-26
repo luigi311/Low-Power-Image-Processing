@@ -8,7 +8,6 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from mpl_toolkits.mplot3d import Axes3D
 
 
 def vis_lut(lut, lut_dim):

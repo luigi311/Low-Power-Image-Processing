@@ -280,15 +280,15 @@ def resize(img, size, interpolation=Image.BILINEAR):
         img {ndarray} -- the input ndarray image
         size {int, iterable} -- the target size, if size is intger,  width and height will be resized to same \
                                 otherwise, the size should be tuple (height, width) or list [height, width]
-                                
-    
+
+
     Keyword Arguments:
         interpolation {Image} -- the interpolation method (default: {Image.BILINEAR})
-    
+
     Raises:
         TypeError -- img should be ndarray
         ValueError -- size should be intger or iterable vaiable and length should be 2.
-    
+
     Returns:
         img -- resize ndarray image
     """
@@ -611,15 +611,13 @@ def bbox_crop(bboxes, top, left, height, width):
 
 def bbox_pad(bboxes, padding):
     if isinstance(padding, int):
-        pad_left = pad_right = pad_top = pad_bottom = padding
+        pad_left = pad_top = padding
     if isinstance(padding, collections.Iterable) and len(padding) == 2:
-        pad_left = pad_right = padding[0]
-        pad_bottom = pad_top = padding[1]
+        pad_left = padding[0]
+        pad_top = padding[1]
     if isinstance(padding, collections.Iterable) and len(padding) == 4:
         pad_left = padding[0]
         pad_top = padding[1]
-        pad_right = padding[2]
-        pad_bottom = padding[3]
 
     pad_bboxes = bboxes.copy()
     pad_bboxes[..., 0::2] = bboxes[..., 0::2] + pad_left

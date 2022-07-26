@@ -348,9 +348,7 @@ def describe_params(model):
         if not "num_batches_tracked" in name:
             v = param.data.clone().float()
             msg += (
-                " | {:>6.3f} | {:>6.3f} | {:>6.3f} | {:>6.3f} | {} || {:s}".format(
-                    v.mean(), v.min(), v.max(), v.std(), v.shape, name
-                )
+                f" | {v.mean():>6.3f} | {v.min():>6.3f} | {v.max():>6.3f} | {v.std():>6.3f} | {v.shape} || {name}"
                 + "\n"
             )
     return msg

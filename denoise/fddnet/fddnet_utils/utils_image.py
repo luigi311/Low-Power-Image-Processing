@@ -9,7 +9,6 @@ from datetime import datetime
 
 # import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -132,7 +131,7 @@ def imssave(imgs, img_path):
     """
     imgs: list, N images of size WxHxC
     """
-    img_name, ext = os.path.splitext(os.path.basename(img_path))
+    img_name = os.path.splitext(os.path.basename(img_path))[0]
     for i, img in enumerate(imgs):
         if img.ndim == 3:
             img = img[:, :, [2, 1, 0]]
