@@ -18,8 +18,8 @@ jobs:
 
       - name: Install deps
         run: |
-          pip install --user -r requirements.txt
-          pip install --user pytest-parallel
+          pip install -r requirements.txt
+          pip install pytest-parallel
           chmod +x download_models.sh
           ./download_models.sh
       
