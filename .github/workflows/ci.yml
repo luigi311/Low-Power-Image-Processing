@@ -25,7 +25,7 @@ jobs:
       
       - name: Run tests
         run: |
-          python test/generate_iamges.py
+          python test/generate_images.py
           pytest --workers auto
 
 
