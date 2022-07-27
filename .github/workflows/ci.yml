@@ -24,7 +24,9 @@ jobs:
           ./download_models.sh
       
       - name: Run tests
-        run: pytest --workers auto
+        run: |
+          python test/generate_iamges.py
+          pytest --workers auto
 
 
   docker:
