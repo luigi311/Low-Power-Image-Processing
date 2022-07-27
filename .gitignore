@@ -4,6 +4,7 @@
 *.tiff
 *.bmp
 *.dng
+*.hdf5
 
 # Ignore models
 **/*.pb

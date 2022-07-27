@@ -1,4 +1,4 @@
-import rawpy, cv2, os
+import rawpy, cv2, os, h5py
 import numpy as np
 from skimage.exposure import is_low_contrast
 from requests import get
@@ -26,30 +26,60 @@ def process_raw(dng_file):
         return rgb
 
 
+def save_hdf5(numpy_array, path):
+    print("Saving hdf5 file")
+
+    with h5py.File(f"{path}/images.hdf5", "w") as hdf5:
+        hdf5.create_dataset(
+            "images", np.shape(numpy_array), h5py.h5t.STD_U8BE, data=numpy_array
+        )
+
+
 # Create a numpy array for all the dng images in the folder
 def loadImages(path):
     try:
         if not os.path.exists(path):
-            raise Exception(f"loadImages: ERROR {path} not found!")
+            raise Exception(f"loadImages: ERROR {path} not found")
+
+        # Check if path is a folder
+        if not os.path.isdir(path):
+            raise Exception(f"loadImages: ERROR {path} is not a folder")
 
         if path.endswith("/"):
             path = path[:-1]
 
-        extensions = tuple(["dng", "tiff"])
+        extensions = tuple(["dng", "tiff", "hdf5"])
         file_list = os.listdir(path)
         process_file_list = [
             os.path.join(path, x) for x in file_list if x.endswith(extensions)
         ]
 
         # Create numpy array
-        numpy_array = []
 
-        # Read all images into numpy array
-        for file in process_file_list:
-            if file.endswith("dng"):
-                numpy_array.append(process_raw(file))
-            else:
-                numpy_array.append(cv2.imread(file))
+        # If a file ending in hdf5 exists
+        hdf5_files = [x for x in process_file_list if x.endswith("hdf5")]
+        if hdf5_files:
+            numpy_array = None
+
+            print("Loading hdf5 files")
+            for hdf5_file in hdf5_files:
+                with h5py.File(hdf5_file, "r") as hdf5:
+                    if numpy_array is None:
+                        numpy_array = np.array(hdf5["/images"][:]).astype(np.uint8)
+                    else:
+                        numpy_array = np.concatenate(
+                            (numpy_array, np.array(hdf5["/images"][:]).astype(np.uint8))
+                        )
+
+        else:
+            numpy_array = []
+
+            # Read all images into numpy array
+            for file in process_file_list:
+                if file.endswith("dng"):
+                    numpy_array.append(process_raw(file))
+                else:
+                    numpy_array.append(cv2.imread(file))
 
         return numpy_array
 
@@ -59,6 +89,8 @@ def loadImages(path):
 
 # Filter out images with low contrast from numpy array
 def filterLowContrast(numpy_array):
+    print("Filtering low contrast images")
+
     filtered_array = []
     for i, image in enumerate(numpy_array):
         if is_low_contrast(

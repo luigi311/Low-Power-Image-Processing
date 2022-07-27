@@ -5,3 +5,4 @@ requests
 rawpy
 imageio
 matplotlib
+h5py
