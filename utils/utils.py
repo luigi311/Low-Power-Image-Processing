@@ -35,16 +35,20 @@ def loadImages(path):
         if path.endswith("/"):
             path = path[:-1]
 
+        extensions = tuple(["dng", "tiff"])
         file_list = os.listdir(path)
-        dng_file_list = [os.path.join(path, x) for x in file_list if x.endswith(".dng")]
+        process_file_list = [os.path.join(path, x) for x in file_list if x.endswith(extensions)]
 
         # Create numpy array
         numpy_array = []
 
         # Read all images into numpy array
-        for file in dng_file_list:
-            numpy_array.append(process_raw(file))
-
+        for file in process_file_list:
+            if file.endswith("dng"):
+                numpy_array.append(process_raw(file))
+            else:
+                numpy_array.append(cv2.imread(file))
+                
         return numpy_array
 
     except Exception as e:
