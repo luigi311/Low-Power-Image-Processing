@@ -27,10 +27,8 @@ def stackImagesECCWorker(numpy_array):
 
     w, h, _ = numpy_array[0].shape
 
-    shrink_factor = 0.6
-
-    if min(w, h) < 1080:
-        shrink_factor = 1
+    # Shrink_factor to bring the image to 720 on the smallest side
+    shrink_factor = 720 / min(w, h)
 
     for _, image in enumerate(numpy_array):
         imageF = image.astype(np.float32) / 255
