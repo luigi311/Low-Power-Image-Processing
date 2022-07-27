@@ -183,7 +183,7 @@ if __name__ == "__main__":
         )
 
         print(f"Created main image in {time()-main_tic} seconds")
-        
+
         # Exit if single_image is ran to avoid processing other images
         exit(0)
 
