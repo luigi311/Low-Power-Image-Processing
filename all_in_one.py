@@ -1,6 +1,4 @@
 import argparse, os, cv2
-
-import numpy
 from time import time
 
 from utils.utils import loadImages, filterLowContrast
@@ -20,23 +18,28 @@ def single_image(images, input_dir, image_extension="png"):
     return image
 
 
-def histogram_processing(image, contrast_method):
-    yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+def histogram_processing(images, contrast_method):
+    out_images = []
+    for image in images:
+        yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
 
-    if contrast_method == "histogram_clahe":
-        # equalize with clahe
-        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
-        yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
+        if contrast_method == "histogram_clahe":
+            # equalize with clahe
+            clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+            yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
 
-    elif contrast_method == "histogram_equalize":
-        # equalize with equalizeHist
-        yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
+        elif contrast_method == "histogram_equalize":
+            # equalize with equalizeHist
+            yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
 
-    else:
-        print("ERROR: Unknown contrast method")
-        exit(1)
+        else:
+            raise Exception("ERROR: Unknown contrast method")
 
-    return cv2.cvtColor(yuv_image, cv2.COLOR_YUV2RGB)
+        rgb_image = cv2.cvtColor(yuv_image, cv2.COLOR_YUV2RGB)
+
+        out_images.append(rgb_image)
+
+    return out_images
 
 
 def shrink_images(numpy_array):
@@ -47,9 +50,8 @@ def shrink_images(numpy_array):
 
     return numpy_array
 
-# ===== MAIN =====
-if __name__ == "__main__":
 
+def setup_args():
     parser = argparse.ArgumentParser(description="Process Image")
     parser.add_argument("input_dir", help="Input directory of images")
     parser.add_argument(
@@ -135,21 +137,21 @@ if __name__ == "__main__":
         type=int,
         default=2,
     )
-    parser.add_argument(
-        "--shrink_images", help="Shrink image", action="store_true"
-    )
-    args = parser.parse_args()
+    parser.add_argument("--shrink_images", help="Shrink image", action="store_true")
+    return parser.parse_args()
 
+
+# ===== MAIN =====
+if __name__ == "__main__":
+    total_tic = time()
+
+    args = setup_args()
+
+    # Flag to indicate if any processing was done on the image
     processed_image = False
-    image_folder = args.input_dir
-    if not os.path.exists(image_folder):
-        print(f"ERROR {image_folder} not found!")
-        exit()
-
-    if image_folder.endswith("/"):
-        image_folder = image_folder[:-1]
 
     loading_tic = time()
+    image_folder = args.input_dir
     numpy_images = loadImages(image_folder)
 
     print("Filtering low contrast images")
@@ -179,10 +181,8 @@ if __name__ == "__main__":
         print("Histogram equalizing images")
         equalize_tic = time()
 
-        for image in numpy_images:
-            equalized_images.append(histogram_processing(image, args.contrast_method))
+        numpy_images = histogram_processing(numpy_images, args.contrast_method)
 
-        numpy_images = equalized_images
         print(f"Histogram equalized in {time()-equalize_tic} seconds")
 
     if args.dehaze_method != "none":
@@ -210,7 +210,11 @@ if __name__ == "__main__":
 
             for image in numpy_images:
                 numpy_images_denoised.append(
-                    denoiser(image, method=args.denoise_all_method, amount=args.denoise_all_amount)
+                    denoiser(
+                        image,
+                        method=args.denoise_all_method,
+                        amount=args.denoise_all_amount,
+                    )
                 )
 
             numpy_images = numpy_images_denoised
@@ -224,6 +228,7 @@ if __name__ == "__main__":
             stack_tic = time()
 
             from stacking.stacking import stacker
+
             image = stacker(numpy_images, args.stack_amount, args.stack_method)
 
             processed_image = True
@@ -232,12 +237,12 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"ERROR: Could not stack images {e}")
 
-
     if args.denoise:
         try:
             denoise_tic = time()
 
             from denoise.denoise import denoiser
+
             denoiser(image, args.denoise_method, args.denoise_amount)
 
             processed_image = True
@@ -281,9 +286,7 @@ if __name__ == "__main__":
 
         print("Resize shrunk image")
         super_tic = time()
-        image = super_resolution(
-            image, args.super_resolution_method, 2
-        )
+        image = super_resolution(image, args.super_resolution_method, 2)
 
         processed_image = True
         print(f"Super resolution image in {time()-super_tic} seconds")
@@ -294,3 +297,5 @@ if __name__ == "__main__":
         )
         print(f"Saved {output_image}")
         cv2.imwrite(output_image, image)
+
+    print(f"Total {time()-total_tic} seconds")

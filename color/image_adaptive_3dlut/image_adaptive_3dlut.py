@@ -1,18 +1,16 @@
-import argparse
 import torch
-import os
-import numpy as np
-import cv2
-from PIL import Image
 from pathlib import Path
 
-from color.image_adaptive_3dlut.models import *
-import color.image_adaptive_3dlut.torchvision_x_functional as TF_x
+from color.image_adaptive_3dlut.models import (
+    Generator3DLUT_identity,
+    Generator3DLUT_zero,
+    Classifier,
+)
+import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 
 
 def image_adaptive_3dlut(image, input_color_space):
-
     model_dir = (
         f"{Path(__file__).parent.absolute()}/pretrained_models/{input_color_space}"
     )
@@ -31,7 +29,6 @@ def image_adaptive_3dlut(image, input_color_space):
     # LUT3 = Generator3DLUT_zero()
     # LUT4 = Generator3DLUT_zero()
     classifier = Classifier()
-    trilinear_ = TrilinearInterpolation()
 
     if cuda:
         LUT0 = LUT0.cuda()

@@ -21,16 +21,11 @@ def ircnnDenoiseImage(image, denoise_amount):
     )  # current_idx+1 th denoiser
     url = f"https://github.com/cszn/KAIR/releases/download/v1.0/{model_name}.pth"
 
-    task_current = "dn"  # fixed, 'dn' for denoising | 'sr' for super-resolution
-    sf = 1  # unused for denoising
     if "color" in model_name:
         n_channels = 3  # fixed, 1 for grayscale image, 3 for color image
     else:
         n_channels = 1  # fixed for grayscale image
 
-    border = (
-        sf if task_current == "sr" else 0
-    )  # shave boader to calculate PSNR and SSIM
     model_dir = Path(__file__).parent.absolute()
     model_path = os.path.join(model_dir, model_name + ".pth")
 
@@ -52,7 +47,6 @@ def ircnnDenoiseImage(image, denoise_amount):
     for _, v in model.named_parameters():
         v.requires_grad = False
     model = model.to(device)
-    number_parameters = sum(map(lambda x: x.numel(), model.parameters()))
 
     # ------------------------------------
     # (1) img_L

@@ -8,9 +8,29 @@ on:
     paths-ignore:
       - .gitignore
       - "*.md"
-  
+
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: docker.io/luigi311/low-power-image-processing-base-image:latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          pip install pytest-parallel
+          chmod +x download_models.sh
+          ./download_models.sh
+
+      - name: Run tests
+        run: |
+          python test/generate_images.py
+          pytest --workers auto
+
   docker:
+    needs:
+      - test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -21,12 +41,11 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         if: "${{ env.DOCKERHUB_USERNAME != '' }}"
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/low-power-image-processing # list of Docker images to use as base name for tags
-          flavor: |
-            latest=true
           tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
@@ -56,7 +75,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: false
           tags: low-power-image-processing:action
-      
+
       - name: Build Push
         id: build_push
         if: "${{ steps.docker_meta.outcome == 'success' }}"

@@ -20,8 +20,6 @@ def fddnetDenoiseImage(image, denoise_amount):
     need_degradation = True  # default: True
     url = f"https://github.com/cszn/KAIR/releases/download/v1.0/{model_name}.pth"
 
-    task_current = "dn"  # 'dn' for denoising | 'sr' for super-resolution
-    sf = 1  # unused for denoising
     if "color" in model_name:
         n_channels = 3  # setting for color image
         nc = 96  # setting for color image
@@ -35,9 +33,6 @@ def fddnetDenoiseImage(image, denoise_amount):
     else:
         use_clip = False
 
-    border = (
-        sf if task_current == "sr" else 0
-    )  # shave boader to calculate PSNR and SSIM
     model_dir = Path(__file__).parent.absolute()
     model_path = os.path.join(model_dir, model_name + ".pth")
 
@@ -56,7 +51,7 @@ def fddnetDenoiseImage(image, denoise_amount):
     model = net(in_nc=n_channels, out_nc=n_channels, nc=nc, nb=nb, act_mode="R")
     model.load_state_dict(torch.load(model_path), strict=True)
     model.eval()
-    for k, v in model.named_parameters():
+    for _, v in model.named_parameters():
         v.requires_grad = False
     model = model.to(device)
 

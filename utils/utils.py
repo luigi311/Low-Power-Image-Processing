@@ -20,6 +20,7 @@ def process_raw(dng_file):
             highlight_mode=rawpy.HighlightMode(2),
             fbdd_noise_reduction=rawpy.FBDDNoiseReductionMode(0),
         )
+
         rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
 
         return rgb
@@ -27,17 +28,33 @@ def process_raw(dng_file):
 
 # Create a numpy array for all the dng images in the folder
 def loadImages(path):
-    file_list = os.listdir(path)
-    dng_file_list = [os.path.join(path, x) for x in file_list if x.endswith(".dng")]
+    try:
+        if not os.path.exists(path):
+            raise Exception(f"loadImages: ERROR {path} not found!")
 
-    # Create numpy array
-    numpy_array = []
+        if path.endswith("/"):
+            path = path[:-1]
 
-    # Read all images into numpy array
-    for file in dng_file_list:
-        numpy_array.append(process_raw(file))
+        extensions = tuple(["dng", "tiff"])
+        file_list = os.listdir(path)
+        process_file_list = [
+            os.path.join(path, x) for x in file_list if x.endswith(extensions)
+        ]
 
-    return numpy_array
+        # Create numpy array
+        numpy_array = []
+
+        # Read all images into numpy array
+        for file in process_file_list:
+            if file.endswith("dng"):
+                numpy_array.append(process_raw(file))
+            else:
+                numpy_array.append(cv2.imread(file))
+
+        return numpy_array
+
+    except Exception as e:
+        raise Exception(e)
 
 
 # Filter out images with low contrast from numpy array

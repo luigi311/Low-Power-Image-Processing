@@ -6,7 +6,7 @@ import cv2
 def stackImagesECCWorker(numpy_array):
     warp_mode = cv2.MOTION_HOMOGRAPHY
     warp_matrix = np.eye(3, 3, dtype=np.float32)
-    
+
     # Specify the number of iterations.
     number_of_iterations = 5
 
@@ -14,7 +14,11 @@ def stackImagesECCWorker(numpy_array):
     # in the correlation coefficient between two iterations
     termination_eps = 1e-10
 
-    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, number_of_iterations,  termination_eps)
+    criteria = (
+        cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT,
+        number_of_iterations,
+        termination_eps,
+    )
 
     first_image = None
     stacked_images = None
@@ -25,7 +29,7 @@ def stackImagesECCWorker(numpy_array):
 
     shrink_factor = 0.6
 
-    if min(w,h) < 1080:
+    if min(w, h) < 1080:
         shrink_factor = 1
 
     for _, image in enumerate(numpy_array):
@@ -48,16 +52,22 @@ def stackImagesECCWorker(numpy_array):
                 warp_mode,
                 criteria,
             )
-            
+
             # Align image to first image
-            image_align = cv2.warpPerspective(imageF, warp_matrix, (h, w), flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
+            image_align = cv2.warpPerspective(
+                imageF,
+                warp_matrix,
+                (h, w),
+                flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP,
+            )
             stacked_images += image_align
 
     stacked_images /= len(numpy_array)
 
     stacked_image = (stacked_images * 255).astype(np.uint8)
-    
+
     return stacked_image
+
 
 def stackImagesECC(numpy_array, stacking_amount=3):
     if stacking_amount == 1:
@@ -124,7 +134,7 @@ def stackImagesKeypointMatching(numpy_array):
             dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
 
             # Estimate perspective transformation
-            M, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
+            M, _ = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
             w, h, _ = imageF.shape
             imageF = cv2.warpPerspective(imageF, M, (h, w))
             stacked_image += imageF
