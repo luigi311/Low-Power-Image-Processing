@@ -37,7 +37,9 @@ def loadImages(path):
 
         extensions = tuple(["dng", "tiff"])
         file_list = os.listdir(path)
-        process_file_list = [os.path.join(path, x) for x in file_list if x.endswith(extensions)]
+        process_file_list = [
+            os.path.join(path, x) for x in file_list if x.endswith(extensions)
+        ]
 
         # Create numpy array
         numpy_array = []
@@ -48,7 +50,7 @@ def loadImages(path):
                 numpy_array.append(process_raw(file))
             else:
                 numpy_array.append(cv2.imread(file))
-                
+
         return numpy_array
 
     except Exception as e:
