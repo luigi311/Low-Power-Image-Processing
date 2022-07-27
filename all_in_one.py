@@ -18,8 +18,6 @@ def single_image(images, input_dir, contrast_method, image_extension="png"):
     print(f"Saved {output_image}")
     cv2.imwrite(output_image, image)
 
-    return image
-
 
 def single_histogram_processing(image, contrast_method):
     yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
@@ -177,19 +175,17 @@ if __name__ == "__main__":
         print("Creating main image")
         main_tic = time()
 
-        image = single_image(
+        single_image(
             numpy_images,
             args.input_dir,
             args.contrast_method,
             args.interal_image_extension,
         )
 
-        if args.show:
-            cv2.imshow("Image", image)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-
         print(f"Created main image in {time()-main_tic} seconds")
+
+        # Exit if single_image is ran to avoid processing other images
+        exit(0)
 
     if args.shrink_images:
         numpy_images = shrink_images(numpy_images)
