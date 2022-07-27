@@ -1,7 +1,7 @@
 import argparse, os, cv2
 from time import time
 
-from utils.utils import loadImages, filterLowContrast
+from utils.utils import loadImages, filterLowContrast, save_hdf5
 
 # Create main and do any processing if needed
 def single_image(images, input_dir, contrast_method, image_extension="png"):
@@ -158,10 +158,17 @@ if __name__ == "__main__":
 
     loading_tic = time()
     image_folder = args.input_dir
+
+    # Load all images
     numpy_images = loadImages(image_folder)
 
-    print("Filtering low contrast images")
+    # Filter ot low contrast images
     numpy_images = filterLowContrast(numpy_images)
+
+    # if image_folder/images.hdf5 does not exists create hdf5 file containing filtered images
+    if not os.path.isfile(os.path.join(image_folder, "images.hdf5")):
+        # Save filtered images to hdf5
+        save_hdf5(numpy_images, image_folder)
 
     print(f"Loaded {len(numpy_images)} images in {time()-loading_tic} seconds")
 

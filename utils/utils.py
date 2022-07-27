@@ -26,6 +26,15 @@ def process_raw(dng_file):
         return rgb
 
 
+def save_hdf5(numpy_array, path):
+    print("Saving hdf5 file")
+
+    with h5py.File(f"{path}/images.hdf5", "w") as hdf5:
+        hdf5.create_dataset(
+            "images", np.shape(numpy_array), h5py.h5t.STD_U8BE, data=numpy_array
+        )
+
+
 # Create a numpy array for all the dng images in the folder
 def loadImages(path):
     try:
@@ -71,14 +80,7 @@ def loadImages(path):
                     numpy_array.append(process_raw(file))
                 else:
                     numpy_array.append(cv2.imread(file))
-
-            # Save numpy array to hdf5 file
-            print("Saving to hdf5 file")
-            with h5py.File(f"{path}/images.hdf5", "w") as hdf5:
-                hdf5.create_dataset(
-                    "images", np.shape(numpy_array), h5py.h5t.STD_U8BE, data=numpy_array
-                )
-
+            
         return numpy_array
 
     except Exception as e:
@@ -87,6 +89,8 @@ def loadImages(path):
 
 # Filter out images with low contrast from numpy array
 def filterLowContrast(numpy_array):
+    print("Filtering low contrast images")
+
     filtered_array = []
     for i, image in enumerate(numpy_array):
         if is_low_contrast(
