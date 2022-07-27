@@ -1,7 +1,11 @@
 import torch
 from pathlib import Path
 
-from color.image_adaptive_3dlut.models import Generator3DLUT_identity, Generator3DLUT_zero, Classifier
+from color.image_adaptive_3dlut.models import (
+    Generator3DLUT_identity,
+    Generator3DLUT_zero,
+    Classifier,
+)
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 

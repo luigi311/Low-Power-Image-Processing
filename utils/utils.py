@@ -28,17 +28,27 @@ def process_raw(dng_file):
 
 # Create a numpy array for all the dng images in the folder
 def loadImages(path):
-    file_list = os.listdir(path)
-    dng_file_list = [os.path.join(path, x) for x in file_list if x.endswith(".dng")]
+    try:
+        if not os.path.exists(path):
+            raise Exception(f"loadImages: ERROR {path} not found!")
 
-    # Create numpy array
-    numpy_array = []
+        if path.endswith("/"):
+            path = path[:-1]
 
-    # Read all images into numpy array
-    for file in dng_file_list:
-        numpy_array.append(process_raw(file))
+        file_list = os.listdir(path)
+        dng_file_list = [os.path.join(path, x) for x in file_list if x.endswith(".dng")]
 
-    return numpy_array
+        # Create numpy array
+        numpy_array = []
+
+        # Read all images into numpy array
+        for file in dng_file_list:
+            numpy_array.append(process_raw(file))
+
+        return numpy_array
+
+    except Exception as e:
+        raise Exception(e)
 
 
 # Filter out images with low contrast from numpy array

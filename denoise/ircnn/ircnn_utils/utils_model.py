@@ -339,9 +339,9 @@ def describe_params(model):
         model = model.module
     msg = "\n"
     msg += f" | {'mean':^6s} | {'min':^6s} | {'max':^6s} | {'std':^6s} | {'shape':^6s} || {'param_name':<20s}\n"
-        
+
     for name, param in model.state_dict().items():
-        if not "num_batches_tracked" in name:
+        if "num_batches_tracked" not in name:
             v = param.data.clone().float()
             msg += f" | {v.mean():>6.3f} | {v.min():>6.3f} | {v.max():>6.3f} | {v.std():>6.3f} | {v.shape} || {name}\n"
 
