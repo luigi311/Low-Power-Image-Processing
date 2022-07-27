@@ -8,7 +8,7 @@ on:
     paths-ignore:
       - .gitignore
       - "*.md"
-  
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -22,14 +22,15 @@ jobs:
           pip install pytest-parallel
           chmod +x download_models.sh
           ./download_models.sh
-      
+
       - name: Run tests
         run: |
           python test/generate_images.py
           pytest --workers auto
 
-
   docker:
+    needs:
+      - test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -74,7 +75,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: false
           tags: low-power-image-processing:action
-      
+
       - name: Build Push
         id: build_push
         if: "${{ steps.docker_meta.outcome == 'success' }}"
