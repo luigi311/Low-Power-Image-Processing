@@ -216,7 +216,7 @@ def test_x8(model, L, modulo=1, sf=1):
         test_pad(model, util.augment_img_tensor4(L, mode=i), modulo=modulo, sf=sf)
         for i in range(8)
     ]
-    for i, item in enumerate(E_list)):
+    for i, item in enumerate(E_list):
         if i == 3 or i == 5:
             item = util.augment_img_tensor4(item, mode=8 - i)
         else:
