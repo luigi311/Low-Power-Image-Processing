@@ -14,17 +14,14 @@ parent = os.path.dirname(current)
 sys.path.append(parent)
 
 
-from utils.utils import loadImages, filterLowContrast
-from denoise.denoise import denoiser
-from super_resolution.super_resolution import super_resolution
-
-
 def calculate_psnr(noisy_image, ground_truth):
     # Calculate PSNR
     return np.mean(ground_truth) / np.mean(noisy_image)
 
 
 def setup_images():
+    from utils.utils import loadImages
+
     # Load noisy images
     noisy_images = loadImages("test/noisy_images")
 
@@ -52,14 +49,17 @@ def test_denoise_fast():
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_denoise_ircnn():
-    noisy_images, ground_truth = setup_images()
+    from denoise.denoise import denoiser
+
+    noisy_images, _ = setup_images()
 
     # denoise first image
-    denoised_image = denoiser(noisy_images[0], "ircnn", 35)
+    denoiser(noisy_images[0], "ircnn", 35)
+    # denoised_image = denoiser(noisy_images[0], "ircnn", 35)
 
     # Calculate PSNRs
-    psnr_denoised = calculate_psnr(denoised_image, ground_truth)
-    psnr_noisy = calculate_psnr(noisy_images[0], ground_truth)
+    # psnr_denoised = calculate_psnr(denoised_image, ground_truth)
+    # psnr_noisy = calculate_psnr(noisy_images[0], ground_truth)
 
     # Check if denoised image is less than noisy image
     # IRCNN is not working properly so we are not checking the PSNR
@@ -67,6 +67,8 @@ def test_denoise_ircnn():
 
 
 def test_denoise_fddnet():
+    from denoise.denoise import denoiser
+
     noisy_images, ground_truth = setup_images()
 
     # denoise first image
@@ -81,6 +83,8 @@ def test_denoise_fddnet():
 
 
 def test_super_resolution_espcn():
+    from super_resolution.super_resolution import super_resolution
+
     _, ground_truth = setup_images()
 
     image = ground_truth[0]
@@ -91,6 +95,8 @@ def test_super_resolution_espcn():
 
 
 def test_super_resolution_fsrcnn():
+    from super_resolution.super_resolution import super_resolution
+
     _, ground_truth = setup_images()
 
     image = ground_truth[0]
@@ -101,9 +107,9 @@ def test_super_resolution_fsrcnn():
 
 
 def test_stacking_ecc():
-    noisy_images, ground_truth = setup_images()
-
     from stacking.stacking import stacker
+
+    noisy_images, ground_truth = setup_images()
 
     stacked_image = stacker(noisy_images, 3, "ECC")
 
@@ -116,9 +122,9 @@ def test_stacking_ecc():
 
 
 def test_stacking_orb():
-    noisy_images, ground_truth = setup_images()
-
     from stacking.stacking import stacker
+
+    noisy_images, ground_truth = setup_images()
 
     stacked_image = stacker(noisy_images, 3, "ORB")
 

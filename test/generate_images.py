@@ -23,7 +23,7 @@ def noisy(image):
     row, col = lum.shape
 
     number_of_pixels = int(row * col * 0.05)
-    for i in range(number_of_pixels):
+    for _ in range(number_of_pixels):
         x = random.randint(0, row - 1)
         y = random.randint(0, col - 1)
         if random.random() < 0.5:
