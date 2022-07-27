@@ -52,5 +52,7 @@ def generate_noise():
     for i, image in enumerate(noisy_images):
         cv2.imwrite(f"test/noisy_images/{i}.tiff", image)
 
+    # Generate hdf5 file so pytest parallel works
+    loadImages("test/noisy_images")
 
 generate_noise()
