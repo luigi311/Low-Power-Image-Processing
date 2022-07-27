@@ -80,7 +80,7 @@ def loadImages(path):
                     numpy_array.append(process_raw(file))
                 else:
                     numpy_array.append(cv2.imread(file))
-            
+
         return numpy_array
 
     except Exception as e:

@@ -55,4 +55,5 @@ def generate_noise():
     # Generate hdf5 file so pytest parallel works
     save_hdf5(noisy_images, "test/noisy_images")
 
+
 generate_noise()
