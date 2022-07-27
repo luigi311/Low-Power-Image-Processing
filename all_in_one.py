@@ -4,12 +4,15 @@ from time import time
 from utils.utils import loadImages, filterLowContrast
 
 # Create main and do any processing if needed
-def single_image(images, input_dir, image_extension="png"):
+def single_image(images, input_dir, contrast_method, image_extension="png"):
     # Default to second image if exists if not first
     if len(images) > 1:
         image = images[1]
     else:
         image = images[0]
+
+    if contrast_method != "none":
+        image = single_histogram_processing(image, contrast_method)
 
     output_image = os.path.join(input_dir, f"main.{image_extension}")
     print(f"Saved {output_image}")
@@ -18,26 +21,29 @@ def single_image(images, input_dir, image_extension="png"):
     return image
 
 
+def single_histogram_processing(image, contrast_method):
+    yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+
+    if contrast_method == "histogram_clahe":
+        # equalize with clahe
+        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+        yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
+
+    elif contrast_method == "histogram_equalize":
+        # equalize with equalizeHist
+        yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
+
+    else:
+        raise Exception("ERROR: Unknown contrast method")
+
+    return cv2.cvtColor(yuv_image, cv2.COLOR_YUV2RGB)
+
+
 def histogram_processing(images, contrast_method):
     out_images = []
+
     for image in images:
-        yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
-
-        if contrast_method == "histogram_clahe":
-            # equalize with clahe
-            clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
-            yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
-
-        elif contrast_method == "histogram_equalize":
-            # equalize with equalizeHist
-            yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
-
-        else:
-            raise Exception("ERROR: Unknown contrast method")
-
-        rgb_image = cv2.cvtColor(yuv_image, cv2.COLOR_YUV2RGB)
-
-        out_images.append(rgb_image)
+        out_images.append(single_histogram_processing(image, contrast_method))
 
     return out_images
 
@@ -164,7 +170,13 @@ if __name__ == "__main__":
         print("Creating main image")
         main_tic = time()
 
-        image = single_image(numpy_images, args.input_dir, args.interal_image_extension)
+        image = single_image(
+            numpy_images,
+            args.input_dir,
+            args.contrast_method,
+            args.interal_image_extension,
+        )
+
         if args.show:
             cv2.imshow("Image", image)
             cv2.waitKey(0)
@@ -197,8 +209,8 @@ if __name__ == "__main__":
             for image in numpy_images:
                 dehazed_images.append(dehaze_darktables(image))
 
-        print(f"Dehazed {len(dehazed_images)} images in {time()-dehaze_tic} seconds")
         numpy_images = dehazed_images
+        print(f"Dehazed {len(dehazed_images)} images in {time()-dehaze_tic} seconds")
 
     if args.denoise_all:
         try:
