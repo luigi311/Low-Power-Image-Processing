@@ -20,7 +20,7 @@ def stackImagesECCWorker(numpy_array):
     termination_eps = 1e-10
 
     criteria = (
-        cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT,
+        cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT,
         number_of_iterations,
         termination_eps,
     )
