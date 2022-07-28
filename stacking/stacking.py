@@ -7,6 +7,11 @@ def stackImagesECCWorker(numpy_array):
     warp_mode = cv2.MOTION_HOMOGRAPHY
     warp_matrix = np.eye(3, 3, dtype=np.float32)
 
+    w, h, _ = numpy_array[0].shape
+
+    # Shrink_factor to bring the image to 720 on the smallest side
+    shrink_factor = 720 / min(w, h)
+
     # Specify the number of iterations.
     number_of_iterations = 5
 
@@ -15,7 +20,7 @@ def stackImagesECCWorker(numpy_array):
     termination_eps = 1e-10
 
     criteria = (
-        cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT,
+        cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT,
         number_of_iterations,
         termination_eps,
     )
@@ -24,11 +29,6 @@ def stackImagesECCWorker(numpy_array):
     stacked_images = None
 
     first_image_shrunk = None
-
-    w, h, _ = numpy_array[0].shape
-
-    # Shrink_factor to bring the image to 720 on the smallest side
-    shrink_factor = 720 / min(w, h)
 
     for _, image in enumerate(numpy_array):
         imageF = image.astype(np.float32) / 255
@@ -50,6 +50,9 @@ def stackImagesECCWorker(numpy_array):
                 warp_mode,
                 criteria,
             )
+
+            # Adjust the warp_matrix to the scale of the original images
+            warp_matrix = warp_matrix * np.array([[1, 1, 1/shrink_factor], [1, 1, 1/shrink_factor], [shrink_factor, shrink_factor, 1]])
 
             # Align image to first image
             image_align = cv2.warpPerspective(
