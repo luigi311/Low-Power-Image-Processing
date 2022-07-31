@@ -3,6 +3,7 @@ from time import time
 
 from utils.utils import loadImages, filterLowContrast, save_hdf5
 
+
 # Create main and do any processing if needed
 def single_image(images, input_dir, contrast_method, image_extension="png"):
     # Default to second image if exists if not first
@@ -146,10 +147,8 @@ def setup_args():
 
 
 # ===== MAIN =====
-if __name__ == "__main__":
+def main(args):
     total_tic = time()
-
-    args = setup_args()
 
     # Flag to indicate if any processing was done on the image
     processed_image = False
@@ -251,6 +250,8 @@ if __name__ == "__main__":
 
         except Exception as e:
             print(f"ERROR: Could not stack images {e}")
+            # Set image to first image in list as fallback
+            image = numpy_images[0]
 
     if args.denoise:
         try:
@@ -314,3 +315,8 @@ if __name__ == "__main__":
         cv2.imwrite(output_image, image)
 
     print(f"Total {time()-total_tic} seconds")
+
+
+if __name__ == "__main__":
+    args = setup_args()
+    main(args)

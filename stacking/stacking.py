@@ -52,7 +52,16 @@ def stackImagesECCWorker(numpy_array):
             )
 
             # Adjust the warp_matrix to the scale of the original images
-            warp_matrix = (warp_matrix * np.array([[1, 1, 1/shrink_factor], [1, 1, 1/shrink_factor], [shrink_factor, shrink_factor, 1]])).astype(np.float32)
+            warp_matrix = (
+                warp_matrix
+                * np.array(
+                    [
+                        [1, 1, 1 / shrink_factor],
+                        [1, 1, 1 / shrink_factor],
+                        [shrink_factor, shrink_factor, 1],
+                    ]
+                )
+            ).astype(np.float32)
 
             # Align image to first image
             image_align = cv2.warpPerspective(
