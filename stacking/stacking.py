@@ -7,7 +7,7 @@ def stackImagesECCWorker(numpy_array):
     warp_mode = cv2.MOTION_HOMOGRAPHY
     warp_matrix = np.eye(3, 3, dtype=np.float32)
 
-    w, h, _ = numpy_array[0].shape
+    w, h = numpy_array[0].shape[:2]
 
     # Shrink_factor to bring the image to 720 on the smallest side
     shrink_factor = 720 / min(w, h)

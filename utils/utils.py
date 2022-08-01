@@ -91,10 +91,14 @@ def loadImages(path):
 def filterLowContrast(numpy_array):
     print("Filtering low contrast images")
 
+    w, h = numpy_array[0].shape[:2]
+    shrink_factor = 720 / min(w, h)
+
     filtered_array = []
     for i, image in enumerate(numpy_array):
+
         if is_low_contrast(
-            image,
+            cv2.resize(image, (0, 0), fx=shrink_factor, fy=shrink_factor),
             fraction_threshold=0.05,
             lower_percentile=10,
             upper_percentile=90,
