@@ -143,6 +143,13 @@ def setup_args():
         default=2,
     )
     parser.add_argument("--shrink_images", help="Shrink image", action="store_true")
+    parser.add_argument(
+        "--scale_down",
+        type=int,
+        default=720,
+        help="Scale down image to the following resolution for stacking and filter contrast",
+    )
+
     return parser.parse_args()
 
 
@@ -160,7 +167,7 @@ def main(args):
     numpy_images = loadImages(image_folder)
 
     # Filter ot low contrast images
-    numpy_images = filterLowContrast(numpy_images)
+    numpy_images = filterLowContrast(numpy_images, args.scale_down)
 
     # if image_folder/images.hdf5 does not exists create hdf5 file containing filtered images
     if not os.path.isfile(os.path.join(image_folder, "images.hdf5")):
@@ -243,7 +250,9 @@ def main(args):
 
             from stacking.stacking import stacker
 
-            image = stacker(numpy_images, args.stack_amount, args.stack_method)
+            image = stacker(
+                numpy_images, args.stack_amount, args.stack_method, args.scale_down
+            )
 
             processed_image = True
             print(f"Stacked images in {time() - stack_tic} seconds")

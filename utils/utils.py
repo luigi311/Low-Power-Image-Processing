@@ -88,11 +88,11 @@ def loadImages(path):
 
 
 # Filter out images with low contrast from numpy array
-def filterLowContrast(numpy_array):
+def filterLowContrast(numpy_array, scale_down=720):
     print("Filtering low contrast images")
 
     w, h = numpy_array[0].shape[:2]
-    shrink_factor = 720 / min(w, h)
+    shrink_factor = scale_down / min(w, h)
 
     filtered_array = []
     for i, image in enumerate(numpy_array):
