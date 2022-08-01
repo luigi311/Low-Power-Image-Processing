@@ -12,27 +12,28 @@ def ircnnDenoiseImage(image, denoise_amount):
     # ----------------------------------------
     # Preparation
     # ----------------------------------------
-    noise_level_img = denoise_amount  # noise level for noisy image
     model_name = "ircnn_color"  # 'ircnn_gray' | 'ircnn_color'
-    need_degradation = True  # default: True
-    x8 = False  # default: False, x8 to boost performance
-    current_idx = min(
-        24, int(np.ceil(noise_level_img / 2) - 1)
-    )  # current_idx+1 th denoiser
-    url = f"https://github.com/cszn/KAIR/releases/download/v1.0/{model_name}.pth"
-
-    if "color" in model_name:
-        n_channels = 3  # fixed, 1 for grayscale image, 3 for color image
-    else:
-        n_channels = 1  # fixed for grayscale image
 
     model_dir = Path(__file__).parent.absolute()
     model_path = os.path.join(model_dir, model_name + ".pth")
 
     if not os.path.exists(model_path):
+        url = f"https://github.com/cszn/KAIR/releases/download/v1.0/{model_name}.pth"
         print("Downloading model...")
         downloader(url, model_path, model_dir)
         print("Download Complete")
+
+    noise_level_img = denoise_amount  # noise level for noisy image
+    need_degradation = True  # default: True
+    x8 = False  # default: False, x8 to boost performance
+    current_idx = min(
+        24, int(np.ceil(noise_level_img / 2) - 1)
+    )  # current_idx+1 th denoiser
+
+    if "color" in model_name:
+        n_channels = 3  # fixed, 1 for grayscale image, 3 for color image
+    else:
+        n_channels = 1  # fixed for grayscale image
 
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = "cpu"

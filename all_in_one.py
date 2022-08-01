@@ -3,6 +3,7 @@ from time import time
 
 from utils.utils import loadImages, filterLowContrast, save_hdf5
 
+
 # Create main and do any processing if needed
 def single_image(images, input_dir, contrast_method, image_extension="png"):
     # Default to second image if exists if not first
@@ -142,14 +143,19 @@ def setup_args():
         default=2,
     )
     parser.add_argument("--shrink_images", help="Shrink image", action="store_true")
+    parser.add_argument(
+        "--scale_down",
+        type=int,
+        default=720,
+        help="Scale down image to the following resolution for stacking and filter contrast",
+    )
+
     return parser.parse_args()
 
 
 # ===== MAIN =====
-if __name__ == "__main__":
+def main(args):
     total_tic = time()
-
-    args = setup_args()
 
     # Flag to indicate if any processing was done on the image
     processed_image = False
@@ -161,7 +167,7 @@ if __name__ == "__main__":
     numpy_images = loadImages(image_folder)
 
     # Filter ot low contrast images
-    numpy_images = filterLowContrast(numpy_images)
+    numpy_images = filterLowContrast(numpy_images, args.scale_down)
 
     # if image_folder/images.hdf5 does not exists create hdf5 file containing filtered images
     if not os.path.isfile(os.path.join(image_folder, "images.hdf5")):
@@ -191,10 +197,8 @@ if __name__ == "__main__":
         numpy_images = shrink_images(numpy_images)
 
     if args.contrast_method != "none":
-        equalized_images = []
-
-        print("Histogram equalizing images")
         equalize_tic = time()
+        print("Histogram equalizing images")
 
         numpy_images = histogram_processing(numpy_images, args.contrast_method)
 
@@ -244,13 +248,17 @@ if __name__ == "__main__":
 
             from stacking.stacking import stacker
 
-            image = stacker(numpy_images, args.stack_amount, args.stack_method)
+            image = stacker(
+                numpy_images, args.stack_amount, args.stack_method, args.scale_down
+            )
 
             processed_image = True
             print(f"Stacked images in {time() - stack_tic} seconds")
 
         except Exception as e:
             print(f"ERROR: Could not stack images {e}")
+            # Set image to first image in list as fallback
+            image = numpy_images[0]
 
     if args.denoise:
         try:
@@ -314,3 +322,8 @@ if __name__ == "__main__":
         cv2.imwrite(output_image, image)
 
     print(f"Total {time()-total_tic} seconds")
+
+
+if __name__ == "__main__":
+    args = setup_args()
+    main(args)

@@ -3,14 +3,14 @@ import cv2
 
 # Align and stack images with ECC method
 # Slower but more accurate
-def stackImagesECCWorker(numpy_array):
+def stackImagesECCWorker(numpy_array, scale_down=720):
     warp_mode = cv2.MOTION_HOMOGRAPHY
     warp_matrix = np.eye(3, 3, dtype=np.float32)
 
-    w, h, _ = numpy_array[0].shape
+    w, h = numpy_array[0].shape[:2]
 
-    # Shrink_factor to bring the image to 720 on the smallest side
-    shrink_factor = 720 / min(w, h)
+    # Shrink_factor to bring the image to scale_down on the smallest side
+    shrink_factor = scale_down / min(w, h)
 
     # Specify the number of iterations.
     number_of_iterations = 5
@@ -52,7 +52,16 @@ def stackImagesECCWorker(numpy_array):
             )
 
             # Adjust the warp_matrix to the scale of the original images
-            warp_matrix = (warp_matrix * np.array([[1, 1, 1/shrink_factor], [1, 1, 1/shrink_factor], [shrink_factor, shrink_factor, 1]])).astype(np.float32)
+            warp_matrix = (
+                warp_matrix
+                * np.array(
+                    [
+                        [1, 1, 1 / shrink_factor],
+                        [1, 1, 1 / shrink_factor],
+                        [shrink_factor, shrink_factor, 1],
+                    ]
+                )
+            ).astype(np.float32)
 
             # Align image to first image
             image_align = cv2.warpPerspective(
@@ -70,7 +79,7 @@ def stackImagesECCWorker(numpy_array):
     return stacked_image
 
 
-def stackImagesECC(numpy_array, stacking_amount=3):
+def stackImagesECC(numpy_array, stacking_amount=3, scale_down=720):
     if stacking_amount == 1:
         print("Error: Stacking amount must be greater than 1")
         exit(1)
@@ -84,13 +93,13 @@ def stackImagesECC(numpy_array, stacking_amount=3):
 
     for chunk in chunks:
         if len(chunk) > 1:
-            stacked.append(stackImagesECCWorker(chunk))
+            stacked.append(stackImagesECCWorker(chunk, scale_down))
         else:
             stacked.append(chunk[0])
 
     # recursively stack images into there is only one image left
     while len(stacked) > 1:
-        stacked = [stackImagesECC(stacked, stacking_amount)]
+        stacked = [stackImagesECC(stacked, stacking_amount, scale_down)]
 
     if len(stacked) == 1:
         return stacked[0]
@@ -146,10 +155,10 @@ def stackImagesKeypointMatching(numpy_array):
     return stacked_image
 
 
-def stacker(numpy_array, stacking_amount=3, method="ECC"):
+def stacker(numpy_array, stacking_amount=3, method="ECC", scale_down=720):
     try:
         if method == "ECC":
-            return stackImagesECC(numpy_array, stacking_amount)
+            return stackImagesECC(numpy_array, stacking_amount, scale_down)
         elif method == "ORB":
             return stackImagesKeypointMatching(numpy_array)
         else:

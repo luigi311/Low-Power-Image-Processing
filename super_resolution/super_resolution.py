@@ -1,33 +1,11 @@
-import cv2, os
-from pathlib import Path
-from utils.utils import downloader
+from super_resolution.opencv.opencv_super_resolution import opencv_super_resolution
 
-# super resolution image
+
 def super_resolution(image, method, scale):
-    model_path = Path(__file__).parent.absolute()
-    sr = cv2.dnn_superres.DnnSuperResImpl_create()
-
     if method == "ESPCN":
-        path = f"{model_path}/ESPCN_x{scale}.pb"
-        url = f"https://raw.githubusercontent.com/fannymonori/TF-ESPCN/master/export/ESPCN_x{scale}.pb"
-        model = "espcn"
+        return opencv_super_resolution(image, method, scale)
     elif method == "FSRCNN":
-        path = f"{model_path}/FSRCNN_x{scale}.pb"
-        url = f"https://raw.githubusercontent.com/Saafke/FSRCNN_Tensorflow/master/models/FSRCNN_x{scale}.pb"
-        model = "fsrcnn"
+        return opencv_super_resolution(image, method, scale)
     else:
         print("Method not supported")
         return
-
-    # If path does not exist, download the model
-    if not os.path.exists(path):
-        print("Downloading model...")
-        downloader(url, path, model_path)
-        print("Download Complete")
-
-    sr.readModel(path)
-    sr.setModel(model, scale)
-    print("Running Super Sampling")
-    result = sr.upsample(image)
-
-    return result

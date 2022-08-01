@@ -111,7 +111,7 @@ def test_stacking_ecc():
 
     noisy_images, ground_truth = setup_images()
 
-    stacked_image = stacker(noisy_images, 3, "ECC")
+    stacked_image = stacker(noisy_images, 3, "ECC", 480)
 
     # Calculate PSNRs
     psnr_stacked = calculate_psnr(stacked_image, ground_truth)
