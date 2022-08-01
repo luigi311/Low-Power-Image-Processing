@@ -197,10 +197,8 @@ def main(args):
         numpy_images = shrink_images(numpy_images)
 
     if args.contrast_method != "none":
-        equalized_images = []
-
-        print("Histogram equalizing images")
         equalize_tic = time()
+        print("Histogram equalizing images")
 
         numpy_images = histogram_processing(numpy_images, args.contrast_method)
 
