@@ -109,7 +109,7 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     return stacked_image
 
 
-def stackImagesECC(numpy_array, stacking_amount=3, scale_down=720):
+def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
     """
     Stack a series of images using the ECC (Extended Correlation Coefficient) method.
 
@@ -133,7 +133,10 @@ def stackImagesECC(numpy_array, stacking_amount=3, scale_down=720):
     # Stack each chunk using the ECC method
     for chunk in chunks:
         if len(chunk) > 1:
-            stacked.append(stackImagesECCWorker(chunk, scale_down))
+            if method == "ECC":
+                stacked.append(stackImagesECCWorker(chunk, scale_down))
+            elif method == "ORB":
+                stacked.append(stackImagesKeypointMatching(chunk))
         else:
             stacked.append(chunk[0])
 
@@ -149,7 +152,12 @@ def stackImagesECC(numpy_array, stacking_amount=3, scale_down=720):
         # Stack each chunk using the ECC method
         for chunk in chunks:
             if len(chunk) > 1:
-                temp_stacked.append(stackImagesECCWorker(np.array(chunk), scale_down))
+                if method == "ECC":
+                    temp_stacked.append(stackImagesECCWorker(np.array(chunk), scale_down))
+                elif method == "ORB":
+                    temp_stacked.append(
+                        stackImagesKeypointMatching(np.array(chunk))
+                    )
             else:
                 temp_stacked.append(chunk[0])
         stacked = temp_stacked
@@ -211,10 +219,8 @@ def stackImagesKeypointMatching(numpy_array):
 
 def stacker(numpy_array, stacking_amount=3, method="ECC", scale_down=720):
     try:
-        if method == "ECC":
-            return stackImagesECC(numpy_array, stacking_amount, scale_down)
-        elif method == "ORB":
-            return stackImagesKeypointMatching(numpy_array)
+        if method in ["ECC", "ORB"]:
+            return chunker(numpy_array, method, stacking_amount, scale_down)
         else:
             raise Exception(f"Stacking Error: Stacking method {method} not supported")
     except Exception as e:
