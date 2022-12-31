@@ -1,7 +1,9 @@
-import argparse, os, cv2
+import argparse, os, cv2, traceback
+import numpy as np
+
 from time import time
 
-from utils.utils import loadImages, filterLowContrast, save_hdf5
+from utils.utils import loadImages, filterLowContrast, save_hdf5, shrink_images
 
 
 # Create main and do any processing if needed
@@ -21,39 +23,67 @@ def single_image(images, input_dir, contrast_method, image_extension="png"):
 
 
 def single_histogram_processing(image, contrast_method):
-    yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+    """
+    Equalize the histogram of a single image.
 
-    if contrast_method == "histogram_clahe":
-        # equalize with clahe
-        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
-        yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
+    Parameters:
+    image (np.ndarray): The image to process.
+    contrast_method (str): The method to use for contrast enhancement.
 
-    elif contrast_method == "histogram_equalize":
-        # equalize with equalizeHist
-        yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
+    Returns:
+    np.ndarray: The processed image.
 
+    """
+    # Check if the image is a grayscale image or has multiple channels
+    if image.ndim == 2:
+        # If the image is grayscale, apply the contrast enhancement method directly
+        if contrast_method == "histogram_clahe":
+            clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+            image = clahe.apply(image)
+        elif contrast_method == "histogram_equalize":
+            image = cv2.equalizeHist(image)
+        else:
+            raise Exception("ERROR: Unknown contrast method")
     else:
-        raise Exception("ERROR: Unknown contrast method")
+        # If the image has multiple channels, convert it to the YUV color space
+        yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+        # Apply the contrast enhancement method to the Y channel
+        if contrast_method == "histogram_clahe":
+            clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+            yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
+        elif contrast_method == "histogram_equalize":
+            yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
+        else:
+            raise Exception("ERROR: Unknown contrast method")
+        # Convert the image back to the RGB color space
+        image = cv2.cvtColor(yuv_image, cv2.COLOR_YUV2RGB)
 
-    return cv2.cvtColor(yuv_image, cv2.COLOR_YUV2RGB)
+    return image
 
 
-def histogram_processing(images, contrast_method):
-    out_images = []
+def histogram_processing(numpy_array, contrast_method):
+    """
+    Equalize the histograms of the images in a numpy array.
 
-    for image in images:
-        out_images.append(single_histogram_processing(image, contrast_method))
+    Parameters:
+    numpy_array (np.ndarray): A numpy array containing the images to process.
+    contrast_method (str): The method to use for contrast enhancement.
 
-    return out_images
+    Returns:
+    np.ndarray: A numpy array containing the processed images.
 
+    """
+    print("Histogram equalizing images")
 
-def shrink_images(numpy_array):
-    print("Shrinking images")
-    # Shrink images to half size
+    # Create a new numpy array to store the processed images
+    processed_array = np.empty(numpy_array.shape, dtype=numpy_array.dtype)
+
+    # Iterate over the images in the numpy array
     for i, image in enumerate(numpy_array):
-        numpy_array[i] = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
+        # Process the image
+        processed_array[i] = single_histogram_processing(image, contrast_method)
 
-    return numpy_array
+    return processed_array
 
 
 def setup_args():
@@ -174,12 +204,12 @@ def main(args):
         # Save filtered images to hdf5
         save_hdf5(numpy_images, image_folder)
 
-    print(f"Loaded {len(numpy_images)} images in {time()-loading_tic} seconds")
+    print(f"Loaded {len(numpy_images)} images in {time() - loading_tic} seconds")
 
     if args.single_image:
         # Create main image
-        print("Creating main image")
         main_tic = time()
+        print("Creating main image")
 
         single_image(
             numpy_images,
@@ -188,23 +218,28 @@ def main(args):
             args.interal_image_extension,
         )
 
-        print(f"Created main image in {time()-main_tic} seconds")
+        print(f"Created main image in {time() - main_tic} seconds")
 
-        print(f"Total {time()-total_tic} seconds")
+        print(f"Total {time() - total_tic} seconds")
 
         # Exit if single_image is ran to avoid processing other images
         exit(0)
 
     if args.shrink_images:
+        shrink_tic = time()
+
         numpy_images = shrink_images(numpy_images)
+
+        processed_image = True
+        print(f"Shunk in {time() - shrink_tic} seconds")
 
     if args.contrast_method != "none":
         equalize_tic = time()
-        print("Histogram equalizing images")
 
         numpy_images = histogram_processing(numpy_images, args.contrast_method)
 
-        print(f"Histogram equalized in {time()-equalize_tic} seconds")
+        processed_image = True
+        print(f"Histogram equalized in {time() - equalize_tic} seconds")
 
     if args.dehaze_method != "none":
         dehaze_tic = time()
@@ -212,37 +247,30 @@ def main(args):
         print("Dehazing images")
         dehazed_images = []
 
-        if args.dehaze_method == "darktables":
-            from dehaze.darktables.darktables import dehaze_darktables
+        from dehaze.dehaze import dehaze_images
 
-            for image in numpy_images:
-                dehazed_images.append(dehaze_darktables(image))
+        numpy_images = dehaze_images(numpy_images, args.dehaze_method)
 
-        numpy_images = dehazed_images
-        print(f"Dehazed {len(dehazed_images)} images in {time()-dehaze_tic} seconds")
+        processed_image = True
+        print(f"Dehazed {len(dehazed_images)} images in {time() - dehaze_tic} seconds")
 
     if args.denoise_all:
         try:
             denoise_all_tic = time()
 
-            numpy_images_denoised = []
+            from denoise.denoise import denoise_images
 
-            from denoise.denoise import denoiser
+            numpy_images = denoise_images(
+                numpy_images,
+                method=args.denoise_all_method,
+                amount=args.denoise_all_amount,
+            )
 
-            for image in numpy_images:
-                numpy_images_denoised.append(
-                    denoiser(
-                        image,
-                        method=args.denoise_all_method,
-                        amount=args.denoise_all_amount,
-                    )
-                )
-
-            numpy_images = numpy_images_denoised
-            print(f"Denoised all images in {time()-denoise_all_tic} seconds")
+            processed_image = True
+            print(f"Denoised all images in {time() - denoise_all_tic} seconds")
 
         except Exception as e:
-            print("ERROR: Could not denoise all images\n", e)
+            raise Exception(f"ERROR: Could not denoise all images\n{e}")
 
     if args.auto_stack:
         try:
@@ -258,9 +286,9 @@ def main(args):
             print(f"Stacked images in {time() - stack_tic} seconds")
 
         except Exception as e:
-            print(f"ERROR: Could not stack images {e}")
-            # Set image to first image in list as fallback
-            image = numpy_images[0]
+            raise Exception(f"ERROR: Could not stack images\n{e}")
+    else:
+        image = numpy_images[0]
 
     if args.denoise:
         try:
@@ -271,28 +299,27 @@ def main(args):
             denoiser(image, args.denoise_method, args.denoise_amount)
 
             processed_image = True
-            print(f"Denoised image in {time()-denoise_tic} seconds")
+            print(f"Denoised image in {time() - denoise_tic} seconds")
 
         except Exception as e:
-            print("ERROR: Could not denoise image\n", e)
+            raise Exception(f"ERROR: Could not denoise image\n{e}")
 
     if args.color_method != "none":
-        color_tic = time()
-        print("Color adjusting image")
+        try:
+            color_tic = time()
+            print("Color adjusting image")
 
-        if args.color_method == "image_adaptive_3dlut":
-            from color.image_adaptive_3dlut.image_adaptive_3dlut import (
-                image_adaptive_3dlut,
-            )
+            if args.color_method == "image_adaptive_3dlut":
+                from color.image_adaptive_3dlut.image_adaptive_3dlut import (
+                    image_adaptive_3dlut,
+                )
 
-            image = image_adaptive_3dlut(image, "sRGB")
+                image = image_adaptive_3dlut(image, "sRGB")
 
-        else:
-            print(f"ERROR: method {args.color_method} not found!")
-            exit(1)
-
-        processed_image = True
-        print(f"Color adjusted image in {time()-color_tic} seconds")
+            processed_image = True
+            print(f"Color adjusted image in {time() - color_tic} seconds")
+        except Exception as e:
+            raise Exception(f"Error: Failed to adjuts color\n{e}")
 
     if args.super_resolution:
         from super_resolution.super_resolution import super_resolution
@@ -304,7 +331,7 @@ def main(args):
         )
 
         processed_image = True
-        print(f"Super resolution image in {time()-super_tic} seconds")
+        print(f"Super resolution image in {time() - super_tic} seconds")
 
     if args.shrink_images:
         from super_resolution.super_resolution import super_resolution
@@ -314,18 +341,31 @@ def main(args):
         image = super_resolution(image, args.super_resolution_method, 2)
 
         processed_image = True
-        print(f"Super resolution image in {time()-super_tic} seconds")
+        print(f"Super resolution image in {time() - super_tic} seconds")
 
     if processed_image:
+        process_tic = time()
+        print("Save process image")
+
         output_image = os.path.join(
             args.input_dir, f"main_processed.{args.interal_image_extension}"
         )
-        print(f"Saved {output_image}")
         cv2.imwrite(output_image, image)
 
-    print(f"Total {time()-total_tic} seconds")
+        print(f"Saved {output_image} in {time() - process_tic}")
+
+    print(f"Total {time() - total_tic} seconds")
 
 
 if __name__ == "__main__":
-    args = setup_args()
-    main(args)
+    try:
+        args = setup_args()
+        main(args)
+    except Exception as error:
+        if isinstance(error, list):
+            for message in error:
+                print(message)
+        else:
+            print(error)
+
+        print(traceback.format_exc())

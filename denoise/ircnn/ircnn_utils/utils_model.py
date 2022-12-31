@@ -136,7 +136,7 @@ def test_split_fn(model, L, refield=32, min_size=256, sf=1, modulo=1):
         E: estimated result
     """
     h, w = L.size()[-2:]
-    if h * w <= min_size ** 2:
+    if h * w <= min_size**2:
         L = torch.nn.ReplicationPad2d(
             (
                 0,
@@ -159,7 +159,7 @@ def test_split_fn(model, L, refield=32, min_size=256, sf=1, modulo=1):
             L[..., bottom, right],
         ]
 
-        if h * w <= 4 * (min_size ** 2):
+        if h * w <= 4 * (min_size**2):
             Es = [model(Ls[i]) for i in range(4)]
         else:
             Es = [

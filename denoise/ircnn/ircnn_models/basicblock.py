@@ -148,7 +148,7 @@ def pixel_unshuffle(input_pixel, upscale_factor):
         batch_size, channels, out_height, upscale_factor, out_width, upscale_factor
     )
 
-    channels *= upscale_factor ** 2
+    channels *= upscale_factor**2
     unshuffle_out = input_view.permute(0, 1, 3, 5, 2, 4).contiguous()
     return unshuffle_out.view(batch_size, channels, out_height, out_width)
 

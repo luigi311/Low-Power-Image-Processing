@@ -35,86 +35,116 @@ def save_hdf5(numpy_array, path):
         )
 
 
-# Create a numpy array for all the dng images in the folder
 def loadImages(path):
-    try:
-        if not os.path.exists(path):
-            raise Exception(f"loadImages: ERROR {path} not found")
+    """
+    Load all dng, tiff or hdf5 images from a directory into a numpy array.
 
-        # Check if path is a folder
-        if not os.path.isdir(path):
-            raise Exception(f"loadImages: ERROR {path} is not a folder")
+    Parameters:
+    path (str): The path to the directory containing the images.
 
-        if path.endswith("/"):
-            path = path[:-1]
+    Returns:
+    np.ndarray: A numpy array containing all the images in the directory.
 
-        extensions = tuple(["dng", "tiff", "hdf5"])
-        file_list = os.listdir(path)
-        process_file_list = [
-            os.path.join(path, x) for x in file_list if x.endswith(extensions)
-        ]
+    """
+    # Check if the path exists and is a directory
+    if not os.path.exists(path) or not os.path.isdir(path):
+        raise ValueError(f"ERROR {path} is not a valid directory.")
 
-        # Create numpy array
+    # Remove trailing slash from path if present
+    if path.endswith("/"):
+        path = path[:-1]
 
-        # If a file ending in hdf5 exists
-        hdf5_files = [x for x in process_file_list if x.endswith("hdf5")]
-        if hdf5_files:
-            numpy_array = None
+    # Get a list of all files in the directory
+    file_list = os.listdir(path)
 
-            print("Loading hdf5 files")
-            for hdf5_file in hdf5_files:
-                with h5py.File(hdf5_file, "r") as hdf5:
-                    if numpy_array is None:
-                        numpy_array = np.array(hdf5["/images"][:]).astype(np.uint8)
-                    else:
-                        numpy_array = np.concatenate(
-                            (numpy_array, np.array(hdf5["/images"][:]).astype(np.uint8))
-                        )
+    # Filter the list to only include dng, tiff, and hdf5 files
+    process_file_list = [
+        os.path.join(path, x) for x in file_list if x.endswith(("dng", "tiff", "hdf5"))
+    ]
 
-        else:
-            numpy_array = []
+    # Preallocate the numpy array with the same dtype as the first image in the file list
+    numpy_array = None
 
-            # Read all images into numpy array
-            for file in process_file_list:
-                if file.endswith("dng"):
-                    numpy_array.append(process_raw(file))
+    # Check if there are any hdf5 files in the filtered list
+    hdf5_files = [x for x in process_file_list if x.endswith("hdf5")]
+    if hdf5_files:
+        print("Loading hdf5 files")
+        for hdf5_file in hdf5_files:
+            # Load the images from the hdf5 file into the numpy array
+            with h5py.File(hdf5_file, "r") as hdf5:
+                if numpy_array is None:
+                    numpy_array = np.array(hdf5["/images"][:]).astype(np.uint8)
                 else:
-                    numpy_array.append(cv2.imread(file))
+                    numpy_array = np.concatenate(
+                        (numpy_array, np.array(hdf5["/images"][:]).astype(np.uint8))
+                    )
+    else:
+        # Iterate over the remaining files in the filtered list (dng and tiff files)
+        for file in process_file_list:
+            # Load the image into a numpy array
+            if file.endswith("dng"):
+                image = process_raw(file)
+            else:
+                image = cv2.imread(file)
 
-        return numpy_array
+            # If the numpy array has not been initialized, set it to the first image
+            if numpy_array is None:
+                numpy_array = np.array(image)
+            # Otherwise, append the image to the numpy array
+            else:
+                numpy_array = np.concatenate((numpy_array, image))
 
-    except Exception as e:
-        raise Exception(e)
+    return numpy_array
 
 
-# Filter out images with low contrast from numpy array
 def filterLowContrast(numpy_array, scale_down=720):
-    print("Filtering low contrast images")
+    """
+    Filter out images with low contrast from a numpy array of images.
+
+    Parameters:
+    numpy_array (np.ndarray): A numpy array of images. All images must be the same size and type.
+    scale_down (int): The scale to which the images will be resized before filtering. The smallest
+        side of the image will be resized to this value. (default=720)
+
+    Returns:
+    np.ndarray: A numpy array containing only the images that passed the low contrast filter.
+
+    """
+    # Check if input is a valid numpy array of images
+    if not isinstance(numpy_array, np.ndarray) or numpy_array.ndim != 4:
+        raise ValueError("Input must be a numpy array of images.")
+
+    # Check if all images are the same size
+    sizes = {tuple(img.shape[:2]) for img in numpy_array}
+    if len(sizes) > 1:
+        raise ValueError("All images must be the same size.")
 
     w, h = numpy_array[0].shape[:2]
     shrink_factor = scale_down / min(w, h)
 
-    filtered_array = []
-    for i, image in enumerate(numpy_array):
+    # Preallocate the filtered_array with the same shape and dtype as the input array
+    filtered_array = np.empty(numpy_array.shape, dtype=numpy_array.dtype)
 
-        if is_low_contrast(
+    # Iterate over the images in the input array
+    for i, image in enumerate(numpy_array):
+        # Check if the image is low contrast
+        if not is_low_contrast(
             cv2.resize(image, (0, 0), fx=shrink_factor, fy=shrink_factor),
             fraction_threshold=0.05,
             lower_percentile=10,
             upper_percentile=90,
             method="linear",
         ):
-            print(f"Image {i} is low contrast")
-        else:
-            filtered_array.append(image)
+            # If not low contrast, append to the filtered_array
+            filtered_array[i] = image
 
-    # if no filtered images, return original array expect for the first image
-    if len(filtered_array) == 0:
+    # If no images passed the low contrast filter, return a copy of the input array with the first image removed
+    if filtered_array.size == 0:
         print("All images low contrast, skipping first image only")
-        for i in range(1, len(numpy_array)):
-            filtered_array.append(numpy_array[i])
+        return numpy_array[1:]
 
-    return filtered_array
+    # Return the filtered array
+    return filtered_array[: i + 1]
 
 
 def fixContrast(image):
@@ -129,6 +159,42 @@ def fixContrast(image):
     image = image * (max_pixel / 255)
 
     return image
+
+
+def shrink_images(numpy_array):
+    """
+    Shrink the images in a numpy array to half their size.
+
+    Parameters:
+    numpy_array (np.ndarray): A numpy array containing the images to shrink.
+
+    Returns:
+    np.ndarray: A numpy array containing the shrunken images.
+
+    """
+    print("Shrinking images")
+
+    # Calculate the new dimensions of the images
+    new_height = numpy_array.shape[1] // 2
+    new_width = numpy_array.shape[2] // 2
+
+    # Check if either dimension is 0
+    if new_height == 0 or new_width == 0:
+        raise ValueError("One or both dimensions is 0. Cannot shrink images.")
+
+    # Create a new numpy array to store the shrunken images
+    shrunken_array = np.empty(
+        (numpy_array.shape[0], new_height, new_width, 3), dtype=numpy_array.dtype
+    )
+
+    # Iterate over the images in the numpy array
+    for i, image in enumerate(numpy_array):
+        # Resize the image to half its size
+        shrunken_array[i] = cv2.resize(
+            image, (new_width, new_height), interpolation=cv2.INTER_LINEAR
+        )
+
+    return shrunken_array
 
 
 def downloader(url, file_name, directory):
