@@ -190,6 +190,8 @@ def main(args):
 
         print(f"Created main image in {time()-main_tic} seconds")
 
+        print(f"Total {time()-total_tic} seconds")
+
         # Exit if single_image is ran to avoid processing other images
         exit(0)
 
