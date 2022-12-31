@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 help() {
     echo "Usage: ./entrypoint.sh [COMMAND] [FLAGS]"

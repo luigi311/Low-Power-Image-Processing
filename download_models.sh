@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 declare -a scales=(2 4)
 declare -a ffdnet_models=( "ffdnet_gray" "ffdnet_color" "ffdnet_color_clip" "ffdnet_gray_clip" )
