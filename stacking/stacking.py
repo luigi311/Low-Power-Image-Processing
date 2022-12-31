@@ -16,7 +16,7 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     np.ndarray: A stacked image of the input images, aligned using the ECC method.
 
     """
-    
+
     # Check if input is a valid numpy array of images
     if not isinstance(numpy_array, np.ndarray) or numpy_array.ndim != 4:
         raise ValueError("Input must be a numpy array of images.")
