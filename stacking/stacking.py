@@ -1,9 +1,40 @@
 import numpy as np
 import cv2
 
-# Align and stack images with ECC method
-# Slower but more accurate
+
 def stackImagesECCWorker(numpy_array, scale_down=720):
+    """
+    Align and stack images with the ECC (Extended Correlation Coefficient) method.
+    This method is slower but more accurate than other methods such as SIFT or SURF.
+
+    Parameters:
+    numpy_array (np.ndarray): A numpy array of images. All images must be the same size and type.
+    scale_down (int): The scale to which the images will be resized before alignment. The smallest
+        side of the image will be resized to this value. (default=720)
+
+    Returns:
+    np.ndarray: A stacked image of the input images, aligned using the ECC method.
+
+    """
+
+    # Check if input is a valid numpy array of images
+    if not isinstance(numpy_array, np.ndarray) or numpy_array.ndim != 4:
+        raise ValueError("Input must be a numpy array of images.")
+
+    # Check if all images are the same size
+    sizes = {tuple(img.shape[:2]) for img in numpy_array}
+    if len(sizes) > 1:
+        raise ValueError("All images must be the same size.")
+
+    # Return an empty image if the input array is empty
+    if len(numpy_array) == 0:
+        return np.zeros(sizes.pop(), dtype=numpy_array.dtype)
+
+    # Return the first image if the input array has only one element
+    if len(numpy_array) == 1:
+        return numpy_array[0]
+
+    # Set the warp mode to homography
     warp_mode = cv2.MOTION_HOMOGRAPHY
     warp_matrix = np.eye(3, 3, dtype=np.float32)
 
@@ -15,8 +46,8 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     # Specify the number of iterations.
     number_of_iterations = 5
 
-    # Specify the threshold of the increment
-    # in the correlation coefficient between two iterations
+    # Specify the threshold of the increment in the correlation coefficient
+    # between two iterations
     termination_eps = 1e-10
 
     criteria = (
@@ -30,16 +61,16 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
 
     first_image_shrunk = None
 
+    # Preallocate the stacked_images array
+    stacked_images = np.zeros(numpy_array[0].shape, dtype=np.float32)
+
     for _, image in enumerate(numpy_array):
         imageF = image.astype(np.float32) / 255
         shrunk_image = cv2.resize(image, (0, 0), fx=shrink_factor, fy=shrink_factor)
-        shrunk_image = shrunk_image.astype(np.float32) / 255
-
+        # Convert to gray scale floating point image
         if first_image is None:
-            # convert to gray scale floating point image
             first_image = cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY)
             first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
-
             stacked_images = imageF
         else:
             # Estimate perspective transform
@@ -72,35 +103,58 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
             )
             stacked_images += image_align
 
-    stacked_images /= len(numpy_array)
-
-    stacked_image = (stacked_images * 255).astype(np.uint8)
+    stacked_image = (stacked_images / len(numpy_array)) * 255
+    stacked_image = stacked_image.astype(np.uint8)
 
     return stacked_image
 
 
 def stackImagesECC(numpy_array, stacking_amount=3, scale_down=720):
-    if stacking_amount == 1:
-        print("Error: Stacking amount must be greater than 1")
-        exit(1)
+    """
+    Stack a series of images using the ECC (Extended Correlation Coefficient) method.
 
-    stacked = []
-    # split into chunks of size stacking_amount
+    Parameters:
+    numpy_array (np.ndarray): A numpy array of images. All images must be the same size and type.
+    stacking_amount (int): The number of images to stack at a time. (default=3)
+    scale_down (int): The scale to which the images will be resized before alignment. The smallest
+        side of the image will be resized to this value. (default=720)
+
+    Returns:
+    np.ndarray: A stacked image of the input images, aligned using the ECC method.
+
+    """
+    # Split the input array into chunks of size stacking_amount
     chunks = [
         numpy_array[x : x + stacking_amount]
         for x in range(0, len(numpy_array), stacking_amount)
     ]
 
+    stacked = []
+    # Stack each chunk using the ECC method
     for chunk in chunks:
         if len(chunk) > 1:
             stacked.append(stackImagesECCWorker(chunk, scale_down))
         else:
             stacked.append(chunk[0])
 
-    # recursively stack images into there is only one image left
+    # While there are more than 1 image in the stacked array, keep stacking using the ECC method
     while len(stacked) > 1:
-        stacked = [stackImagesECC(stacked, stacking_amount, scale_down)]
+        temp_stacked = []
+        # Split the stacked array into chunks of size stacking_amount
+        chunks = [
+            stacked[x : x + stacking_amount]
+            for x in range(0, len(stacked), stacking_amount)
+        ]
 
+        # Stack each chunk using the ECC method
+        for chunk in chunks:
+            if len(chunk) > 1:
+                temp_stacked.append(stackImagesECCWorker(np.array(chunk), scale_down))
+            else:
+                temp_stacked.append(chunk[0])
+        stacked = temp_stacked
+
+    # Return the final stacked image
     if len(stacked) == 1:
         return stacked[0]
 

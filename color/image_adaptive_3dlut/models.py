@@ -297,7 +297,7 @@ class TrilinearInterpolation(torch.autograd.Function):
         x = x.contiguous()
         output = x.new(x.size())
         dim = LUT.size()[-1]
-        shift = dim ** 3
+        shift = dim**3
         binsize = 1.0001 / (dim - 1)
         W = x.size(2)
         H = x.size(3)
@@ -403,9 +403,9 @@ class TV_3D(nn.Module):
         dif_g = LUT.LUT[:, :, :-1, :] - LUT.LUT[:, :, 1:, :]
         dif_b = LUT.LUT[:, :-1, :, :] - LUT.LUT[:, 1:, :, :]
         tv = (
-            torch.mean(torch.mul((dif_r ** 2), self.weight_r))
-            + torch.mean(torch.mul((dif_g ** 2), self.weight_g))
-            + torch.mean(torch.mul((dif_b ** 2), self.weight_b))
+            torch.mean(torch.mul((dif_r**2), self.weight_r))
+            + torch.mean(torch.mul((dif_g**2), self.weight_g))
+            + torch.mean(torch.mul((dif_b**2), self.weight_b))
         )
 
         mn = (

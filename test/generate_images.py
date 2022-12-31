@@ -22,7 +22,7 @@ def noisy(image):
     # Add salt and pepper noise to images
     row, col = lum.shape
 
-    number_of_pixels = int(row * col * 0.05)
+    number_of_pixels = int(row * col * 0.1)
     for _ in range(number_of_pixels):
         x = random.randint(0, row - 1)
         y = random.randint(0, col - 1)
@@ -39,10 +39,11 @@ def noisy(image):
 def generate_noise():
     numpyimages = loadImages("test/images")
 
+    print(numpyimages.shape)
     # Generate 3 noisy images
     noisy_images = []
     for i in range(3):
-        noisy_images.append(noisy(numpyimages[0]))
+        noisy_images.append(noisy(numpyimages))
 
     # Create noisy_images folder
     if not os.path.exists("test/noisy_images"):

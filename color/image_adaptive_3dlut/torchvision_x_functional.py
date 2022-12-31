@@ -580,12 +580,9 @@ def bbox_resize(bboxes, img_size, target_size):
     ratio_height = target_size[0] / img_size[0]
     ratio_width = target_size[1] / img_size[1]
 
-    return (
-        bboxes[
-            ...,
-        ]
-        * [ratio_width, ratio_height, ratio_width, ratio_height]
-    )
+    return bboxes[
+        ...,
+    ] * [ratio_width, ratio_height, ratio_width, ratio_height]
 
 
 def bbox_crop(bboxes, top, left, height, width):
