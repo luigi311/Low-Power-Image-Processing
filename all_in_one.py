@@ -6,6 +6,15 @@ from time import time
 from utils.utils import loadImages, filterLowContrast, save_hdf5, shrink_images
 
 
+def save_image(path, image, extension="png"):
+    if extension == "jpg":
+        cv2.imwrite(path, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+    elif extension == "png":
+        cv2.imwrite(path, image, [int(cv2.IMWRITE_PNG_COMPRESSION), 0])
+    else:
+        cv2.imwrite(path, image)
+
+
 # Create main and do any processing if needed
 def single_image(images, input_dir, contrast_method, image_extension="png"):
     # Default to second image if exists if not first
@@ -18,8 +27,9 @@ def single_image(images, input_dir, contrast_method, image_extension="png"):
         image = single_histogram_processing(image, contrast_method)
 
     output_image = os.path.join(input_dir, f"main.{image_extension}")
+
+    save_image(output_image, image, image_extension)
     print(f"Saved {output_image}")
-    cv2.imwrite(output_image, image)
 
 
 def single_histogram_processing(image, contrast_method):
@@ -350,7 +360,7 @@ def main(args):
         output_image = os.path.join(
             args.input_dir, f"main_processed.{args.interal_image_extension}"
         )
-        cv2.imwrite(output_image, image)
+        save_image(output_image, image, args.interal_image_extension)
 
         print(f"Saved {output_image} in {time() - process_tic}")
 
