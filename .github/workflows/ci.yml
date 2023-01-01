@@ -45,7 +45,7 @@ jobs:
 
       - name: Install deps
         run: |
-          apt-get update && apt-get install -y valgrind
+          apt-get update && apt-get install -y valgrind git
           pip install -r requirements.txt
           chmod +x download_models.sh
           ./download_models.sh
@@ -68,7 +68,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.base_ref }}
-        
+
       - name: Install deps
         run: |
           pip install -r requirements.txt
