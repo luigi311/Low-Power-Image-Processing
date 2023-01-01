@@ -33,6 +33,14 @@ jobs:
     needs:
       - test
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: amd64
+            platform: linux/amd64
+          - name: arm64
+            platform: linux/arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -44,7 +52,7 @@ jobs:
         if: "${{ env.DOCKERHUB_USERNAME != '' }}"
         uses: docker/metadata-action@v4
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/low-power-image-processing # list of Docker images to use as base name for tags
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/low-power-image-processing
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
@@ -73,7 +81,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
           push: false
           tags: low-power-image-processing:action
 
@@ -84,7 +92,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
