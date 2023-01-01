@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     container: docker.io/luigi311/low-power-image-processing-base-image:latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install deps
         run: |
@@ -28,6 +28,25 @@ jobs:
         run: |
           python test/generate_images.py
           pytest --workers auto
+
+  bench:
+    needs:
+      - test
+    runs-on: ubuntu-latest
+    container: docker.io/luigi311/low-power-image-processing-base-image:latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install deps
+        run: |
+          apt-get update && apt-get install -y valgrind
+          pip install -r requirements.txt
+          chmod +x download_models.sh
+          ./download_models.sh
+
+      - name: Run benchmarks
+        run: |
+          python test/benchmarking/cachegrind.py python all_in_one.py test/images --single_image --interal_image_extension png --contrast_method histogram_clahe --scale_down 540
 
   docker:
     needs:
@@ -43,7 +62,7 @@ jobs:
             platform: linux/arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Docker meta
         id: docker_meta
