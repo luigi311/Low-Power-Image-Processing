@@ -123,4 +123,9 @@ def combined_instruction_estimate(counts: Dict[str, int]) -> int:
 
 
 if __name__ == "__main__":
-    print(combined_instruction_estimate(get_counts(run_with_cachegrind(sys.argv[1:]))))
+    output = combined_instruction_estimate(get_counts(run_with_cachegrind(sys.argv[1:])))
+    print(output)
+    
+    # Save output to a file, so we can read it later:
+    with open("benchmark.txt", "w") as f:
+        f.write(str(output))

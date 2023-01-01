@@ -46,7 +46,25 @@ jobs:
 
       - name: Run benchmarks
         run: |
-          python test/benchmarking/cachegrind.py python all_in_one.py test/images --single_image --interal_image_extension png --contrast_method histogram_clahe --scale_down 540
+          python test/benchmarking/cachegrind.py python all_in_one.py test/images --interal_image_extension png --contrast_method histogram_clahe --scale_down 540 --auto_stack --stack_method ECC --stack_amount 2 2> /dev/null > /dev/null
+          mv benchmark.txt current.txt
+          cat current.txt
+      
+      - name: Checkout previous commit
+        run: |
+          git checkout HEAD^1
+          pip install -r requirements.txt
+          chmod +x download_models.sh
+          ./download_models.sh
+      
+      - name: Run benchmarks
+        run: |
+          python test/benchmarking/cachegrind.py python all_in_one.py test/images --interal_image_extension png --contrast_method histogram_clahe --scale_down 540 --auto_stack --stack_method ECC --stack_amount 2 2> /dev/null > /dev/null
+          cat benchmark.txt
+
+      - name: Compare benchmarks
+        run: |
+          python test/benchmarking/compare.py benchmark.txt current.txt
 
   docker:
     needs:
