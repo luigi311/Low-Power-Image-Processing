@@ -73,7 +73,9 @@ def loadImages(path):
             # Load the images from the hdf5 file into the numpy array
             with h5py.File(hdf5_file, "r") as hdf5:
                 numpy_array.append(np.array(hdf5["/images"][:]).astype(np.uint8))
-               
+        
+        # Concatenate the images in numpy_array along the first axis
+        numpy_array = np.concatenate(numpy_array, axis=0)
     else:
         # Iterate over the remaining files in the filtered list (dng and tiff files)
         for file in process_file_list:
