@@ -63,7 +63,7 @@ def loadImages(path):
     ]
 
     # Preallocate the numpy array with the same dtype as the first image in the file list
-    numpy_array = None
+    numpy_array = []
 
     # Check if there are any hdf5 files in the filtered list
     hdf5_files = [x for x in process_file_list if x.endswith("hdf5")]
@@ -72,12 +72,8 @@ def loadImages(path):
         for hdf5_file in hdf5_files:
             # Load the images from the hdf5 file into the numpy array
             with h5py.File(hdf5_file, "r") as hdf5:
-                if numpy_array is None:
-                    numpy_array = np.array(hdf5["/images"][:]).astype(np.uint8)
-                else:
-                    numpy_array = np.concatenate(
-                        (numpy_array, np.array(hdf5["/images"][:]).astype(np.uint8))
-                    )
+                numpy_array.append(np.array(hdf5["/images"][:]).astype(np.uint8))
+               
     else:
         # Iterate over the remaining files in the filtered list (dng and tiff files)
         for file in process_file_list:
@@ -87,14 +83,9 @@ def loadImages(path):
             else:
                 image = cv2.imread(file)
 
-            # If the numpy array has not been initialized, set it to the first image
-            if numpy_array is None:
-                numpy_array = np.array(image)
-            # Otherwise, append the image to the numpy array
-            else:
-                numpy_array = np.concatenate((numpy_array, image))
+            numpy_array.append(image)
 
-    return numpy_array
+    return np.array(numpy_array)
 
 
 def filterLowContrast(numpy_array, scale_down=720):
