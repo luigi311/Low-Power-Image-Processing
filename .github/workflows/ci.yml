@@ -39,13 +39,18 @@ jobs:
       options: --privileged
 
     steps:
+      # Install git so checkout will clone via git
+      - name: Apt deps
+        run: |
+          apt-get update
+          apt-get install -y valgrind git
+
       - uses: actions/checkout@v3
         with:
           fetch-depth: 2
 
       - name: Install deps
         run: |
-          apt-get update && apt-get install -y valgrind git
           pip install -r requirements.txt
           chmod +x download_models.sh
           ./download_models.sh
