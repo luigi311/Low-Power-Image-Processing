@@ -14,6 +14,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container: docker.io/luigi311/low-power-image-processing-base-image:latest
+    
     steps:
       - uses: actions/checkout@v3
 
@@ -33,9 +34,14 @@ jobs:
     needs:
       - test
     runs-on: ubuntu-latest
-    container: docker.io/luigi311/low-power-image-processing-base-image:latest
+    container: 
+      image: docker.io/luigi311/low-power-image-processing-base-image:latest
+      options: --privileged
+
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
 
       - name: Install deps
         run: |
@@ -50,9 +56,21 @@ jobs:
           mv benchmark.txt current.txt
           cat current.txt
       
+      # If commit is not a pull request checkout previous commit
       - name: Checkout previous commit
+        if: github.event_name == 'push'
         run: |
           git checkout HEAD^1
+      
+      # If commit is a pull request checkout base branch
+      - name: Checkout base branch
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.base_ref }}
+        
+      - name: Install deps
+        run: |
           pip install -r requirements.txt
           chmod +x download_models.sh
           ./download_models.sh
@@ -70,6 +88,7 @@ jobs:
     needs:
       - test
     runs-on: ubuntu-latest
+    
     strategy:
       fail-fast: false
       matrix:
