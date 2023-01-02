@@ -5,6 +5,7 @@
 *.bmp
 *.dng
 *.hdf5
+*.txt
 
 # Ignore models
 **/*.pb

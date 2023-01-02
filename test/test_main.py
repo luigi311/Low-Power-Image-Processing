@@ -40,8 +40,8 @@ def test_denoise_fast():
     denoised_image = denoiser(noisy_images[0], "fast", 10)
 
     # Calculate PSNRs
-    psnr_denoised = calculate_psnr(denoised_image, ground_truth)
-    psnr_noisy = calculate_psnr(noisy_images[0], ground_truth)
+    psnr_denoised = calculate_psnr(denoised_image, ground_truth[0])
+    psnr_noisy = calculate_psnr(noisy_images[0], ground_truth[0])
 
     # Check if denoised image is less than noisy image
     assert psnr_denoised > psnr_noisy
@@ -58,8 +58,8 @@ def test_denoise_ircnn():
     # denoised_image = denoiser(noisy_images[0], "ircnn", 35)
 
     # Calculate PSNRs
-    # psnr_denoised = calculate_psnr(denoised_image, ground_truth)
-    # psnr_noisy = calculate_psnr(noisy_images[0], ground_truth)
+    # psnr_denoised = calculate_psnr(denoised_image, ground_truth[0])
+    # psnr_noisy = calculate_psnr(noisy_images[0], ground_truth[0])
 
     # Check if denoised image is less than noisy image
     # IRCNN is not working properly so we are not checking the PSNR
@@ -75,8 +75,8 @@ def test_denoise_fddnet():
     denoised_image = denoiser(noisy_images[0], "fddnet", 35)
 
     # Calculate PSNRs
-    psnr_denoised = calculate_psnr(denoised_image, ground_truth)
-    psnr_noisy = calculate_psnr(noisy_images[0], ground_truth)
+    psnr_denoised = calculate_psnr(denoised_image, ground_truth[0])
+    psnr_noisy = calculate_psnr(noisy_images[0], ground_truth[0])
 
     # Check if denoised image is less than noisy image
     assert psnr_denoised > psnr_noisy
@@ -114,8 +114,8 @@ def test_stacking_ecc():
     stacked_image = stacker(noisy_images, 3, "ECC", 480)
 
     # Calculate PSNRs
-    psnr_stacked = calculate_psnr(stacked_image, ground_truth)
-    psnr_noisy = calculate_psnr(noisy_images[0], ground_truth)
+    psnr_stacked = calculate_psnr(stacked_image, ground_truth[0])
+    psnr_noisy = calculate_psnr(noisy_images[0], ground_truth[0])
 
     # Check if stacked image is less than noisy image
     assert psnr_stacked > psnr_noisy
@@ -129,8 +129,8 @@ def test_stacking_orb():
     stacked_image = stacker(noisy_images, 3, "ORB")
 
     # Calculate PSNRs
-    psnr_stacked = calculate_psnr(stacked_image, ground_truth)
-    psnr_noisy = calculate_psnr(noisy_images[0], ground_truth)
+    psnr_stacked = calculate_psnr(stacked_image, ground_truth[0])
+    psnr_noisy = calculate_psnr(noisy_images[0], ground_truth[0])
 
     # Check if stacked image is less than noisy image
     assert psnr_stacked > psnr_noisy

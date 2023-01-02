@@ -14,8 +14,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container: docker.io/luigi311/low-power-image-processing-base-image:latest
+    
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install deps
         run: |
@@ -29,13 +30,82 @@ jobs:
           python test/generate_images.py
           pytest --workers auto
 
+  bench:
+    needs:
+      - test
+    runs-on: ubuntu-latest
+    container: 
+      image: docker.io/luigi311/low-power-image-processing-base-image:latest
+      options: --privileged
+
+    steps:
+      # Install git so checkout will clone via git
+      - name: Apt deps
+        run: |
+          apt-get update
+          apt-get install -y valgrind git
+
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          chmod +x download_models.sh
+          ./download_models.sh
+
+      - name: Run benchmarks
+        run: |
+          python test/benchmarking/cachegrind.py python all_in_one.py test/images --interal_image_extension png --contrast_method histogram_clahe --scale_down 540 --auto_stack --stack_method ECC --stack_amount 2 2> /dev/null > /dev/null
+          mv benchmark.txt current.txt
+          cat current.txt
+      
+      # If commit is not a pull request checkout previous commit
+      - name: Checkout previous commit
+        if: github.event_name == 'push'
+        run: |
+          git checkout HEAD^1
+      
+      # If commit is a pull request checkout base branch
+      - name: Checkout base branch
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.base_ref }}
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          chmod +x download_models.sh
+          ./download_models.sh
+      
+      - name: Run benchmarks
+        run: |
+          rm -f test/images/*.hdf5 test/images/*.png
+          python test/benchmarking/cachegrind.py python all_in_one.py test/images --interal_image_extension png --contrast_method histogram_clahe --scale_down 540 --auto_stack --stack_method ECC --stack_amount 2 2> /dev/null > /dev/null
+          cat benchmark.txt
+
+      - name: Compare benchmarks
+        run: |
+          python test/benchmarking/compare.py benchmark.txt current.txt
+
   docker:
     needs:
       - test
     runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: amd64
+            platform: linux/amd64
+          - name: arm64
+            platform: linux/arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Docker meta
         id: docker_meta
@@ -44,7 +114,7 @@ jobs:
         if: "${{ env.DOCKERHUB_USERNAME != '' }}"
         uses: docker/metadata-action@v4
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/low-power-image-processing # list of Docker images to use as base name for tags
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/low-power-image-processing
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
@@ -73,7 +143,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
           push: false
           tags: low-power-image-processing:action
 
@@ -84,7 +154,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}

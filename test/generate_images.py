@@ -1,4 +1,5 @@
 import random, os, sys, cv2
+import numpy as np
 
 # getting the name of the directory
 # where the this file is present.
@@ -39,12 +40,13 @@ def noisy(image):
 def generate_noise():
     numpyimages = loadImages("test/images")
 
-    print(numpyimages.shape)
     # Generate 3 noisy images
     noisy_images = []
     for i in range(3):
-        noisy_images.append(noisy(numpyimages))
+        noisy_images.append(noisy(numpyimages[0]))
 
+    noisy_images=np.array(noisy_images)
+    
     # Create noisy_images folder
     if not os.path.exists("test/noisy_images"):
         os.makedirs("test/noisy_images")
