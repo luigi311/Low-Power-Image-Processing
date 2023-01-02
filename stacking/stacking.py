@@ -2,52 +2,6 @@ import numpy as np
 import cv2
 
 
-def alignImageECC(
-    imageF,
-    shrunk_image,
-    first_image_shrunk,
-    shrink_factor,
-    warp_matrix,
-    warp_mode,
-    criteria,
-    h,
-    w,
-):
-    try:
-        # Estimate perspective transform
-        _, warp_matrix = cv2.findTransformECC(
-            first_image_shrunk,
-            cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY),
-            warp_matrix,
-            warp_mode,
-            criteria,
-        )
-
-        # Adjust the warp_matrix to the scale of the original images
-        warp_matrix = (
-            warp_matrix
-            * np.array(
-                [
-                    [1, 1, 1 / shrink_factor],
-                    [1, 1, 1 / shrink_factor],
-                    [shrink_factor, shrink_factor, 1],
-                ]
-            )
-        ).astype(np.float32)
-
-        # Align image to first image
-        image_align = cv2.warpPerspective(
-            imageF,
-            warp_matrix,
-            (h, w),
-            flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP,
-        )
-
-        return image_align
-    except:
-        return None
-
-
 def stackImagesECCWorker(numpy_array, scale_down=720):
     """
     Align and stack images with the ECC (Extended Correlation Coefficient) method.
@@ -116,26 +70,44 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
             first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
             stacked_image = imageF
         else:
-            image_align = alignImageECC(
-                imageF,
-                shrunk_image,
-                first_image_shrunk,
-                shrink_factor,
-                warp_matrix,
-                warp_mode,
-                criteria,
-                h,
-                w,
-            )
-            if image_align is None:
-                print("Failed to align image")
-            else:
+            try:
+                # Estimate perspective transform
+                _, warp_matrix = cv2.findTransformECC(
+                    first_image_shrunk,
+                    cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY),
+                    warp_matrix,
+                    warp_mode,
+                    criteria,
+                )
+
+                # Adjust the warp_matrix to the scale of the original images
+                warp_matrix = (
+                    warp_matrix
+                    * np.array(
+                        [
+                            [1, 1, 1 / shrink_factor],
+                            [1, 1, 1 / shrink_factor],
+                            [shrink_factor, shrink_factor, 1],
+                        ]
+                    )
+                ).astype(np.float32)
+
+                # Align image to first image
+                image_align = cv2.warpPerspective(
+                    imageF,
+                    warp_matrix,
+                    (h, w),
+                    flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP,
+                )
+
                 stacked_image += image_align
                 count_stacked += 1
-                print("Aligned image")
+                print("Aligned image")                
+            except:
+                print("Failed to align image")                
 
-    stacked_image = (stacked_image / count_stacked) * 255
-    stacked_image = stacked_image.astype(np.uint8)
+    stacked_image /= count_stacked
+    stacked_image = (stacked_image * 255).astype(np.uint8)
 
     return stacked_image
 
@@ -212,6 +184,8 @@ def stackImagesKeypointMatching(numpy_array):
     first_image = None
     first_kp = None
     first_des = None
+    count_stacked = 1
+
     for _, image in enumerate(numpy_array):
         imageF = image.astype(np.float32) / 255
 
@@ -229,22 +203,27 @@ def stackImagesKeypointMatching(numpy_array):
             first_kp = kp
             first_des = des
         else:
-            # Find matches and sort them in the order of their distance
-            matches = matcher.match(first_des, des)
-            matches = sorted(matches, key=lambda x: x.distance)
+            try:
+                # Find matches and sort them in the order of their distance
+                matches = matcher.match(first_des, des)
+                matches = sorted(matches, key=lambda x: x.distance)
 
-            src_pts = np.float32([first_kp[m.queryIdx].pt for m in matches]).reshape(
-                -1, 1, 2
-            )
-            dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+                src_pts = np.float32([first_kp[m.queryIdx].pt for m in matches]).reshape(
+                    -1, 1, 2
+                )
+                dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
 
-            # Estimate perspective transformation
-            M, _ = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
-            w, h, _ = imageF.shape
-            imageF = cv2.warpPerspective(imageF, M, (h, w))
-            stacked_image += imageF
+                # Estimate perspective transformation
+                M, _ = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
+                w, h, _ = imageF.shape
+                imageF = cv2.warpPerspective(imageF, M, (h, w))
+                stacked_image += imageF
+                count_stacked += 1
+                print("Aligned image")
+            except:
+                print("Failed to align image")
 
-    stacked_image /= len(numpy_array)
+    stacked_image /= count_stacked
     stacked_image = (stacked_image * 255).astype(np.uint8)
 
     return stacked_image
