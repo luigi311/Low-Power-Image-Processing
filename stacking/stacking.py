@@ -6,7 +6,7 @@ from utils.utils import future_thread_executor
 def alignImageECC(imageF, shrunk_image, first_image_shrunk, shrink_factor, warp_matrix, warp_mode, criteria, h, w):
     try:
         # Estimate perspective transform
-        result, warp_matrix = cv2.findTransformECC(
+        _, warp_matrix = cv2.findTransformECC(
             first_image_shrunk,
             cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY),
             warp_matrix,
@@ -80,11 +80,11 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     shrink_factor = scale_down / min(w, h)
 
     # Specify the number of iterations.
-    number_of_iterations = 6
+    number_of_iterations = 5
 
     # Specify the threshold of the increment in the correlation coefficient
     # between two iterations
-    termination_eps = 1e-12
+    termination_eps = 1e-10
 
     criteria = (
         cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT,
@@ -100,7 +100,7 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     # Preallocate the stacked_images array
     stacked_images = []
 
-    for _, image in enumerate(numpy_array):
+    for i, image in enumerate(numpy_array):
         imageF = image.astype(np.float32) / 255
         shrunk_image = cv2.resize(image, (0, 0), fx=shrink_factor, fy=shrink_factor)
         # Convert to gray scale floating point image
@@ -111,7 +111,7 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
         else:
             image_align = alignImageECC(imageF, shrunk_image, first_image_shrunk, shrink_factor, warp_matrix, warp_mode, criteria, h, w)
             if image_align is None:
-                print("Failed to align image")
+                print(f"Failed to align image {i}")
             else:
                 stacked_images.append(image_align)
 
