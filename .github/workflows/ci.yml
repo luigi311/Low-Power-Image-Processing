@@ -62,17 +62,14 @@ jobs:
           cat current.txt
       
       # If commit is not a pull request checkout previous commit
-      - name: Checkout previous commit
+      - name: Checkout previous commit (push)
         if: github.event_name == 'push'
-        run: |
-          git checkout HEAD^1
+        run: git checkout HEAD^1
       
       # If commit is a pull request checkout base branch
-      - name: Checkout base branch
+      - name: Checkout base branch (pull request)
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.base_ref }}
+        run: git checkout ${{ github.base_ref }}
 
       - name: Install deps
         run: |
