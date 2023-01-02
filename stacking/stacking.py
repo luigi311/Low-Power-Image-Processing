@@ -1,9 +1,18 @@
 import numpy as np
 import cv2
 
-from utils.utils import future_thread_executor
 
-def alignImageECC(imageF, shrunk_image, first_image_shrunk, shrink_factor, warp_matrix, warp_mode, criteria, h, w):
+def alignImageECC(
+    imageF,
+    shrunk_image,
+    first_image_shrunk,
+    shrink_factor,
+    warp_matrix,
+    warp_mode,
+    criteria,
+    h,
+    w,
+):
     try:
         # Estimate perspective transform
         _, warp_matrix = cv2.findTransformECC(
@@ -38,6 +47,7 @@ def alignImageECC(imageF, shrunk_image, first_image_shrunk, shrink_factor, warp_
     except:
         return None
 
+
 def stackImagesECCWorker(numpy_array, scale_down=720):
     """
     Align and stack images with the ECC (Extended Correlation Coefficient) method.
@@ -54,7 +64,10 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     """
 
     # Check if input is a valid numpy array of images
-    if not isinstance(numpy_array, np.ndarray) or numpy_array.ndim != 4:
+    if not isinstance(numpy_array, np.ndarray):
+        numpy_array = np.array(numpy_array)
+
+    if len(numpy_array.shape) != 4:
         raise ValueError("Input must be a numpy array of images.")
 
     # Check if all images are the same size
@@ -93,12 +106,9 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     )
 
     first_image = None
-    stacked_images = None
-
     first_image_shrunk = None
-
-    # Preallocate the stacked_images array
-    stacked_images = []
+    stacked_image = None
+    count_stacked = 1
 
     for i, image in enumerate(numpy_array):
         imageF = image.astype(np.float32) / 255
@@ -107,25 +117,26 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
         if first_image is None:
             first_image = cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY)
             first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
-            stacked_images.append(imageF)
+            stacked_image = imageF
         else:
-            image_align = alignImageECC(imageF, shrunk_image, first_image_shrunk, shrink_factor, warp_matrix, warp_mode, criteria, h, w)
+            image_align = alignImageECC(
+                imageF,
+                shrunk_image,
+                first_image_shrunk,
+                shrink_factor,
+                warp_matrix,
+                warp_mode,
+                criteria,
+                h,
+                w,
+            )
             if image_align is None:
                 print(f"Failed to align image {i}")
             else:
-                stacked_images.append(image_align)
+                stacked_image += image_align
+                count_stacked += 1
 
-    # Convert the stacked_images list to a numpy array
-    stacked_images = np.array(stacked_images)
-
-    # Scale the pixel values of the aligned images
-    stacked_images = stacked_images * 255
-
-    # Median stack the aligned images
-    stacked_image = np.average(stacked_images, axis=0)
-
-    # Scale the stacked image back to the original pixel range
-    stacked_image = (stacked_image / 255) * stacked_images.max()
+    stacked_image = (stacked_image / count_stacked) * 255
     stacked_image = stacked_image.astype(np.uint8)
 
     return stacked_image
@@ -162,7 +173,6 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
                 stacked.append(stackImagesKeypointMatching(chunk))
         else:
             stacked.append(chunk[0])
-    
 
     # While there are more than 1 image in the stacked array, keep stacking using the ECC method
     while len(stacked) > 1:
@@ -177,7 +187,9 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
         for chunk in chunks:
             if len(chunk) > 1:
                 if method == "ECC":
-                    temp_stacked.append(stackImagesECCWorker(np.array(chunk), scale_down))
+                    temp_stacked.append(
+                        stackImagesECCWorker(np.array(chunk), scale_down)
+                    )
                 elif method == "ORB":
                     temp_stacked.append(stackImagesKeypointMatching(np.array(chunk)))
             else:

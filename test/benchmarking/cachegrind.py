@@ -49,21 +49,24 @@ def run_with_cachegrind(args_list: List[str]) -> Dict[str, int]:
     For now we just ignore program output, and in general this is not robust.
     """
     temp_file = NamedTemporaryFile("r+")
-    check_call([
-        # Disable ASLR:
-        "setarch",
-        ARCH,
-        "-R",
-        "valgrind",
-        "--tool=cachegrind",
-        # Set some reasonable L1 and LL values, based on Haswell. You can set
-        # your own, important part is that they are consistent across runs,
-        # instead of the default of copying from the current machine.
-        "--I1=32768,8,64",
-        "--D1=32768,8,64",
-        "--LL=8388608,16,64",
-        "--cachegrind-out-file=" + temp_file.name,
-    ] + args_list)
+    check_call(
+        [
+            # Disable ASLR:
+            "setarch",
+            ARCH,
+            "-R",
+            "valgrind",
+            "--tool=cachegrind",
+            # Set some reasonable L1 and LL values, based on Haswell. You can set
+            # your own, important part is that they are consistent across runs,
+            # instead of the default of copying from the current machine.
+            "--I1=32768,8,64",
+            "--D1=32768,8,64",
+            "--LL=8388608,16,64",
+            "--cachegrind-out-file=" + temp_file.name,
+        ]
+        + args_list
+    )
     return parse_cachegrind_output(temp_file)
 
 
@@ -72,12 +75,12 @@ def parse_cachegrind_output(temp_file):
     lines = iter(temp_file)
     for line in lines:
         if line.startswith("events: "):
-            header = line[len("events: "):].strip()
+            header = line[len("events: ") :].strip()
             break
     for line in lines:
         last_line = line
     assert last_line.startswith("summary: ")
-    last_line = last_line[len("summary:"):].strip()
+    last_line = last_line[len("summary:") :].strip()
     return dict(zip(header.split(), [int(i) for i in last_line.split()]))
 
 
@@ -123,9 +126,11 @@ def combined_instruction_estimate(counts: Dict[str, int]) -> int:
 
 
 if __name__ == "__main__":
-    output = combined_instruction_estimate(get_counts(run_with_cachegrind(sys.argv[1:])))
+    output = combined_instruction_estimate(
+        get_counts(run_with_cachegrind(sys.argv[1:]))
+    )
     print(output)
-    
+
     # Save output to a file, so we can read it later:
     with open("benchmark.txt", "w") as f:
         f.write(str(output))
