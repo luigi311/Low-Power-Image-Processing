@@ -16,15 +16,15 @@ def save_image(path, image, extension="png"):
 
 
 # Create main and do any processing if needed
-def single_image(images, input_dir, contrast_method, image_extension="png"):
+def single_image(images, input_dir, histogram_method, image_extension="png"):
     # Default to second image if exists if not first
     if len(images) > 1:
         image = images[1]
     else:
         image = images[0]
 
-    if contrast_method != "none":
-        image = single_histogram_processing(image, contrast_method)
+    if histogram_method != "none":
+        image = single_histogram_processing(image, histogram_method)
 
     output_image = os.path.join(input_dir, f"main.{image_extension}")
 
@@ -32,13 +32,13 @@ def single_image(images, input_dir, contrast_method, image_extension="png"):
     print(f"Saved {output_image}")
 
 
-def single_histogram_processing(image, contrast_method):
+def single_histogram_processing(image, histogram_method):
     """
     Equalize the histogram of a single image.
 
     Parameters:
     image (np.ndarray): The image to process.
-    contrast_method (str): The method to use for contrast enhancement.
+    histogram_method (str): The method to use for histogram enhancement.
 
     Returns:
     np.ndarray: The processed image.
@@ -46,38 +46,38 @@ def single_histogram_processing(image, contrast_method):
     """
     # Check if the image is a grayscale image or has multiple channels
     if image.ndim == 2:
-        # If the image is grayscale, apply the contrast enhancement method directly
-        if contrast_method == "histogram_clahe":
+        # If the image is grayscale, apply the histogram enhancement method directly
+        if histogram_method == "histogram_clahe":
             clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
             image = clahe.apply(image)
-        elif contrast_method == "histogram_equalize":
+        elif histogram_method == "histogram_equalize":
             image = cv2.equalizeHist(image)
         else:
-            raise Exception("ERROR: Unknown contrast method")
+            raise Exception("ERROR: Unknown histogram method")
     else:
         # If the image has multiple channels, convert it to the YUV color space
         yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
-        # Apply the contrast enhancement method to the Y channel
-        if contrast_method == "histogram_clahe":
+        # Apply the histogram enhancement method to the Y channel
+        if histogram_method == "histogram_clahe":
             clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
             yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
-        elif contrast_method == "histogram_equalize":
+        elif histogram_method == "histogram_equalize":
             yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
         else:
-            raise Exception("ERROR: Unknown contrast method")
+            raise Exception("ERROR: Unknown histogram method")
         # Convert the image back to the RGB color space
         image = cv2.cvtColor(yuv_image, cv2.COLOR_YUV2RGB)
 
     return image
 
 
-def histogram_processing(numpy_array, contrast_method):
+def histogram_processing(numpy_array, histogram_method):
     """
     Equalize the histograms of the images in a numpy array.
 
     Parameters:
     numpy_array (np.ndarray): A numpy array containing the images to process.
-    contrast_method (str): The method to use for contrast enhancement.
+    histogram_method (str): The method to use for histogram enhancement.
 
     Returns:
     np.ndarray: A numpy array containing the processed images.
@@ -91,7 +91,7 @@ def histogram_processing(numpy_array, contrast_method):
     # Iterate over the images in the numpy array
     for i, image in enumerate(numpy_array):
         # Process the image
-        processed_array[i] = single_histogram_processing(image, contrast_method)
+        processed_array[i] = single_histogram_processing(image, histogram_method)
 
     return processed_array
 
@@ -106,9 +106,9 @@ def setup_args():
     )
     parser.add_argument("--single_image", help="Single image mode", action="store_true")
     parser.add_argument(
-        "--contrast_method",
+        "--histogram_method",
         default="none",
-        help="Contrast method to use",
+        help="histogram method to use",
         choices=["histogram_clahe", "histogram_equalize"],
     )
     parser.add_argument(
@@ -224,7 +224,7 @@ def main(args):
         single_image(
             numpy_images,
             args.input_dir,
-            args.contrast_method,
+            args.histogram_method,
             args.interal_image_extension,
         )
 
@@ -243,10 +243,10 @@ def main(args):
         processed_image = True
         print(f"Shunk in {time() - shrink_tic} seconds")
 
-    if args.contrast_method != "none":
+    if args.histogram_method != "none":
         equalize_tic = time()
 
-        numpy_images = histogram_processing(numpy_images, args.contrast_method)
+        numpy_images = histogram_processing(numpy_images, args.histogram_method)
 
         processed_image = True
         print(f"Histogram equalized in {time() - equalize_tic} seconds")

@@ -57,7 +57,7 @@ jobs:
 
       - name: Run benchmarks
         run: |
-          python test/benchmarking/cachegrind.py python all_in_one.py test/images --interal_image_extension png --contrast_method histogram_clahe --scale_down 540 --auto_stack --stack_method ECC --stack_amount 2 2> /dev/null > /dev/null
+          python test/benchmarking/cachegrind.py python all_in_one.py test/images --interal_image_extension png --histogram_method histogram_clahe --scale_down 540 --auto_stack --stack_method ECC --stack_amount 2 2> /dev/null > /dev/null
           mv benchmark.txt /tmp/current.txt
           cat /tmp/current.txt
       
@@ -82,7 +82,7 @@ jobs:
       - name: Run benchmarks
         run: |
           rm -f test/images/*.hdf5 test/images/*.png
-          python test/benchmarking/cachegrind.py python all_in_one.py test/images --interal_image_extension png --contrast_method histogram_clahe --scale_down 540 --auto_stack --stack_method ECC --stack_amount 2 2> /dev/null > /dev/null
+          python test/benchmarking/cachegrind.py python all_in_one.py test/images --interal_image_extension png --histogram_method histogram_clahe --scale_down 540 --auto_stack --stack_method ECC --stack_amount 2 2> /dev/null > /dev/null
           cat benchmark.txt
 
       - name: Compare benchmarks

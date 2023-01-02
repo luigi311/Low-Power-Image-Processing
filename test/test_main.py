@@ -28,7 +28,7 @@ def setup_images():
     # Load ground truth images
     ground_truth = loadImages("test/images")
 
-    # Remove first image from ground truth due to ow contrast
+    # Remove first image from ground truth due to low contrast
     ground_truth = ground_truth[1:]
 
     return noisy_images, ground_truth
