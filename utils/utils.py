@@ -2,7 +2,7 @@ import rawpy, cv2, os, h5py
 import numpy as np
 from skimage.exposure import is_low_contrast
 from requests import get
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 
 def process_raw(dng_file):
@@ -77,15 +77,17 @@ def loadImages(path):
         # Concatenate the images in numpy_array along the first axis
         numpy_array = np.concatenate(numpy_array, axis=0)
     else:
-        # Iterate over the remaining files in the filtered list (dng and tiff files)
-        for file in process_file_list:
-            # Load the image into a numpy array
-            if file.endswith("dng"):
-                image = process_raw(file)
-            else:
-                image = cv2.imread(file)
+        dng_files = [x for x in process_file_list if x.endswith("dng")]
+        tiff_files = [x for x in process_file_list if x.endswith("tiff")]
+        with ProcessPoolExecutor(max_workers=os.cpu_count()-1) as executor:
+            if dng_files:
+                for result in executor.map(process_raw, dng_files):
+                    numpy_array.append(result)
+            if tiff_files:
+                for result in executor.map(cv2.imread, tiff_files):
+                    numpy_array.append(result)
 
-            numpy_array.append(image)
+        
 
     return np.array(numpy_array)
 
