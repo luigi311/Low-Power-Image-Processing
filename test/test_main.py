@@ -28,7 +28,22 @@ def setup_images():
     # Load ground truth images
     ground_truth = loadImages("test/images")
 
+    # Remove first image from ground truth due to ow contrast
+    ground_truth = ground_truth[1:]
+
     return noisy_images, ground_truth
+
+
+def test_filter_low_contrast():
+    from utils.utils import filterLowContrast, loadImages
+
+    ground_truth = loadImages("test/images")
+
+    # Filter out low contrast images
+    filtered_images = filterLowContrast(ground_truth)
+
+    # Check if there are only 4 images left
+    assert len(filtered_images) == 4
 
 
 def test_denoise_fast():
