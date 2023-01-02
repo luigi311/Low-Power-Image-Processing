@@ -152,20 +152,17 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
     ]
 
     stacked = []
-    stackImageWorkers = []
 
     # Stack each chunk using the ECC method
     for chunk in chunks:
         if len(chunk) > 1:
             if method == "ECC":
-                stackImageWorkers.append([stackImagesECCWorker, chunk, scale_down])
+                stacked.append(stackImagesECCWorker(chunk, scale_down))
             elif method == "ORB":
-                stackImageWorkers.append([stackImagesKeypointMatching, chunk])
+                stacked.append(stackImagesKeypointMatching(chunk))
         else:
             stacked.append(chunk[0])
     
-    for stackImage in future_thread_executor(stackImageWorkers):
-        stacked.append(stackImage)
 
     # While there are more than 1 image in the stacked array, keep stacking using the ECC method
     while len(stacked) > 1:
@@ -176,20 +173,15 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
             for x in range(0, len(stacked), stacking_amount)
         ]
 
-        stackImageWorkers = []
-
         # Stack each chunk using the ECC method
         for chunk in chunks:
             if len(chunk) > 1:
                 if method == "ECC":
-                    stackImageWorkers.append([stackImagesECCWorker, np.array(chunk), scale_down])
+                    temp_stacked.append(stackImagesECCWorker(np.array(chunk), scale_down))
                 elif method == "ORB":
-                    stackImageWorkers.append([stackImagesKeypointMatching, np.array(chunk)])
+                    temp_stacked.append(stackImagesKeypointMatching(np.array(chunk)))
             else:
                 temp_stacked.append(chunk[0])
-        
-        for stackImage in future_thread_executor(stackImageWorkers):
-            temp_stacked.append(stackImage)
 
         stacked = temp_stacked
 
