@@ -107,7 +107,7 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     stacked_image = None
     count_stacked = 1
 
-    for i, image in enumerate(numpy_array):
+    for _, image in enumerate(numpy_array):
         imageF = image.astype(np.float32) / 255
         shrunk_image = cv2.resize(image, (0, 0), fx=shrink_factor, fy=shrink_factor)
         # Convert to gray scale floating point image
@@ -128,10 +128,11 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
                 w,
             )
             if image_align is None:
-                print(f"Failed to align image {i}")
+                print("Failed to align image")
             else:
                 stacked_image += image_align
                 count_stacked += 1
+                print("Aligned image")
 
     stacked_image = (stacked_image / count_stacked) * 255
     stacked_image = stacked_image.astype(np.uint8)
