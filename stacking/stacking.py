@@ -160,7 +160,7 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
             if method == "ECC":
                 stackImageWorkers.append([stackImagesECCWorker, chunk, scale_down])
             elif method == "ORB":
-                stackImageWorkers.apend([stackImagesKeypointMatching, chunk])
+                stackImageWorkers.append([stackImagesKeypointMatching, chunk])
         else:
             stacked.append(chunk[0])
     
