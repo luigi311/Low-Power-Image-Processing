@@ -1,6 +1,42 @@
 import numpy as np
 import cv2
 
+from utils.utils import future_thread_executor
+
+def alignImageECC(imageF, shrunk_image, first_image_shrunk, shrink_factor, warp_matrix, warp_mode, criteria, h, w):
+    try:
+        # Estimate perspective transform
+        result, warp_matrix = cv2.findTransformECC(
+            first_image_shrunk,
+            cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY),
+            warp_matrix,
+            warp_mode,
+            criteria,
+        )
+
+        # Adjust the warp_matrix to the scale of the original images
+        warp_matrix = (
+            warp_matrix
+            * np.array(
+                [
+                    [1, 1, 1 / shrink_factor],
+                    [1, 1, 1 / shrink_factor],
+                    [shrink_factor, shrink_factor, 1],
+                ]
+            )
+        ).astype(np.float32)
+
+        # Align image to first image
+        image_align = cv2.warpPerspective(
+            imageF,
+            warp_matrix,
+            (h, w),
+            flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP,
+        )
+
+        return image_align
+    except:
+        return None
 
 def stackImagesECCWorker(numpy_array, scale_down=720):
     """
@@ -44,11 +80,11 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     shrink_factor = scale_down / min(w, h)
 
     # Specify the number of iterations.
-    number_of_iterations = 5
+    number_of_iterations = 6
 
     # Specify the threshold of the increment in the correlation coefficient
     # between two iterations
-    termination_eps = 1e-10
+    termination_eps = 1e-12
 
     criteria = (
         cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT,
@@ -64,6 +100,8 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     # Preallocate the stacked_images array
     stacked_images = np.zeros(numpy_array[0].shape, dtype=np.float32)
 
+    image_align_workers = []
+
     for _, image in enumerate(numpy_array):
         imageF = image.astype(np.float32) / 255
         shrunk_image = cv2.resize(image, (0, 0), fx=shrink_factor, fy=shrink_factor)
@@ -73,36 +111,14 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
             first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
             stacked_images = imageF
         else:
-            # Estimate perspective transform
-            _, warp_matrix = cv2.findTransformECC(
-                first_image_shrunk,
-                cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY),
-                warp_matrix,
-                warp_mode,
-                criteria,
-            )
-
-            # Adjust the warp_matrix to the scale of the original images
-            warp_matrix = (
-                warp_matrix
-                * np.array(
-                    [
-                        [1, 1, 1 / shrink_factor],
-                        [1, 1, 1 / shrink_factor],
-                        [shrink_factor, shrink_factor, 1],
-                    ]
-                )
-            ).astype(np.float32)
-
-            # Align image to first image
-            image_align = cv2.warpPerspective(
-                imageF,
-                warp_matrix,
-                (h, w),
-                flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP,
-            )
+            image_align_workers.append([alignImageECC, imageF, shrunk_image, first_image_shrunk, shrink_factor, warp_matrix, warp_mode, criteria, h, w])
+            
+    # Align and stack the images
+    for image_align in future_thread_executor(image_align_workers):
+        if image_align is not None:
             stacked_images += image_align
 
+    # Average the stacked images
     stacked_image = (stacked_images / len(numpy_array)) * 255
     stacked_image = stacked_image.astype(np.uint8)
 
