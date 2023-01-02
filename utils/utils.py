@@ -116,8 +116,7 @@ def filterLowContrast(numpy_array, scale_down=720):
     shrink_factor = scale_down / min(w, h)
 
     # Preallocate the filtered_array with the same shape and dtype as the input array
-    filtered_array = np.empty(numpy_array.shape, dtype=numpy_array.dtype)
-
+    filtered_array = []
     # Iterate over the images in the input array
     for i, image in enumerate(numpy_array):
         # Check if the image is low contrast
@@ -129,7 +128,12 @@ def filterLowContrast(numpy_array, scale_down=720):
             method="linear",
         ):
             # If not low contrast, append to the filtered_array
-            filtered_array[i] = image
+            filtered_array.append(image)
+        else:
+            # If low contrast, print the image number and continue
+            print(f"Image {i} low contrast, skipping")
+
+    filtered_array = np.array(filtered_array)
 
     # If no images passed the low contrast filter, return a copy of the input array with the first image removed
     if filtered_array.size == 0:

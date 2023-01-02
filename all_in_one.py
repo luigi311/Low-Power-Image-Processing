@@ -206,7 +206,7 @@ def main(args):
     # Load all images
     numpy_images = loadImages(image_folder)
 
-    # Filter ot low contrast images
+    # Filter low contrast images
     numpy_images = filterLowContrast(numpy_images, args.scale_down)
 
     # if image_folder/images.hdf5 does not exists create hdf5 file containing filtered images

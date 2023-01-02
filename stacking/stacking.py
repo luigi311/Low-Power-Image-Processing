@@ -62,17 +62,18 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     count_stacked = 1
 
     for _, image in enumerate(numpy_array):
-        imageF = image.astype(np.float32) / 255
-        shrunk_image = cv2.resize(image, (0, 0), fx=shrink_factor, fy=shrink_factor)
-        # Convert to gray scale floating point image
-        if first_image is None:
-            first_image = cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY)
-            first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
-            stacked_image = imageF
-        else:
-            try:
+        try:
+            imageF = image.astype(np.float32) / 255
+            shrunk_image = cv2.resize(image, (0, 0), fx=shrink_factor, fy=shrink_factor)
+            # Convert to gray scale floating point image
+            if first_image is None:
+                first_image = cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY)
+                first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
+                stacked_image = imageF
+            else:
+            
                 # Estimate perspective transform
-                _, warp_matrix = cv2.findTransformECC(
+                _, temp_warp_matrix = cv2.findTransformECC(
                     first_image_shrunk,
                     cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY),
                     warp_matrix,
@@ -81,8 +82,8 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
                 )
 
                 # Adjust the warp_matrix to the scale of the original images
-                warp_matrix = (
-                    warp_matrix
+                temp_warp_matrix = (
+                    temp_warp_matrix
                     * np.array(
                         [
                             [1, 1, 1 / shrink_factor],
@@ -95,16 +96,19 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
                 # Align image to first image
                 image_align = cv2.warpPerspective(
                     imageF,
-                    warp_matrix,
+                    temp_warp_matrix,
                     (h, w),
                     flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP,
                 )
 
                 stacked_image += image_align
                 count_stacked += 1
-                print("Aligned image")                
-            except:
-                print("Failed to align image")                
+
+                warp_matrix = temp_warp_matrix
+                print("Aligned image")           
+        except:
+            print("Failed to align image")
+
 
     stacked_image /= count_stacked
     stacked_image = (stacked_image * 255).astype(np.uint8)
@@ -133,7 +137,8 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
     ]
 
     stacked = []
-
+    print("Stacing images...")
+    print(len(chunks))
     # Stack each chunk using the ECC method
     for chunk in chunks:
         if len(chunk) > 1:
@@ -146,6 +151,7 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
 
     # While there are more than 1 image in the stacked array, keep stacking using the ECC method
     while len(stacked) > 1:
+        print("Looping\n\n\n\n")
         temp_stacked = []
         # Split the stacked array into chunks of size stacking_amount
         chunks = [
