@@ -58,8 +58,8 @@ jobs:
       - name: Run benchmarks
         run: |
           python test/benchmarking/cachegrind.py python all_in_one.py test/images --interal_image_extension png --contrast_method histogram_clahe --scale_down 540 --auto_stack --stack_method ECC --stack_amount 2 2> /dev/null > /dev/null
-          mv benchmark.txt current.txt
-          cat current.txt
+          mv benchmark.txt /tmp/current.txt
+          cat /tmp/current.txt
       
       # If commit is not a pull request checkout previous commit
       - name: Checkout previous commit (push)
@@ -69,7 +69,9 @@ jobs:
       # If commit is a pull request checkout base branch
       - name: Checkout base branch (pull request)
         if: github.event_name == 'pull_request'
-        run: git checkout ${{ github.base_ref }}
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.base_ref }}
 
       - name: Install deps
         run: |
@@ -84,8 +86,7 @@ jobs:
           cat benchmark.txt
 
       - name: Compare benchmarks
-        run: |
-          python test/benchmarking/compare.py benchmark.txt current.txt
+        run: python test/benchmarking/compare.py benchmark.txt /tmp/current.txt
 
   docker:
     needs:
