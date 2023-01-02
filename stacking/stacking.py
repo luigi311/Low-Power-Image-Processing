@@ -64,10 +64,7 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     """
 
     # Check if input is a valid numpy array of images
-    if not isinstance(numpy_array, np.ndarray):
-        numpy_array = np.array(numpy_array)
-
-    if len(numpy_array.shape) != 4:
+    if not isinstance(numpy_array, np.ndarray) or numpy_array.ndim != 4:
         raise ValueError("Input must be a numpy array of images.")
 
     # Check if all images are the same size
