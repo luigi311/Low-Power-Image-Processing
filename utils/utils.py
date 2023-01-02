@@ -206,7 +206,7 @@ def future_thread_executor(args: list, workers: int = -1):
     results = []
 
     if workers == -1:
-        workers = os.cpu_count()
+        workers = os.cpu_count()-1
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
         for arg in args:

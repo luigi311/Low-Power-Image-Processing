@@ -98,9 +98,7 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     first_image_shrunk = None
 
     # Preallocate the stacked_images array
-    stacked_images = np.zeros(numpy_array[0].shape, dtype=np.float32)
-
-    image_align_workers = []
+    stacked_images = []
 
     for _, image in enumerate(numpy_array):
         imageF = image.astype(np.float32) / 255
@@ -109,17 +107,25 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
         if first_image is None:
             first_image = cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY)
             first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
-            stacked_images = imageF
+            stacked_images.append(imageF)
         else:
-            image_align_workers.append([alignImageECC, imageF, shrunk_image, first_image_shrunk, shrink_factor, warp_matrix, warp_mode, criteria, h, w])
-            
-    # Align and stack the images
-    for image_align in future_thread_executor(image_align_workers):
-        if image_align is not None:
-            stacked_images += image_align
+            image_align = alignImageECC(imageF, shrunk_image, first_image_shrunk, shrink_factor, warp_matrix, warp_mode, criteria, h, w)
+            if image_align is None:
+                print("Failed to align image")
+            else:
+                stacked_images.append(image_align)
 
-    # Average the stacked images
-    stacked_image = (stacked_images / len(numpy_array)) * 255
+    # Convert the stacked_images list to a numpy array
+    stacked_images = np.array(stacked_images)
+
+    # Scale the pixel values of the aligned images
+    stacked_images = stacked_images * 255
+
+    # Median stack the aligned images
+    stacked_image = np.average(stacked_images, axis=0)
+
+    # Scale the stacked image back to the original pixel range
+    stacked_image = (stacked_image / 255) * stacked_images.max()
     stacked_image = stacked_image.astype(np.uint8)
 
     return stacked_image
@@ -146,15 +152,20 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
     ]
 
     stacked = []
+    stackImageWorkers = []
+
     # Stack each chunk using the ECC method
     for chunk in chunks:
         if len(chunk) > 1:
             if method == "ECC":
-                stacked.append(stackImagesECCWorker(chunk, scale_down))
+                stackImageWorkers.append([stackImagesECCWorker, chunk, scale_down])
             elif method == "ORB":
-                stacked.append(stackImagesKeypointMatching(chunk))
+                stackImageWorkers.apend([stackImagesKeypointMatching, chunk])
         else:
             stacked.append(chunk[0])
+    
+    for stackImage in future_thread_executor(stackImageWorkers):
+        stacked.append(stackImage)
 
     # While there are more than 1 image in the stacked array, keep stacking using the ECC method
     while len(stacked) > 1:
@@ -165,17 +176,21 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
             for x in range(0, len(stacked), stacking_amount)
         ]
 
+        stackImageWorkers = []
+
         # Stack each chunk using the ECC method
         for chunk in chunks:
             if len(chunk) > 1:
                 if method == "ECC":
-                    temp_stacked.append(stackImagesECCWorker(np.array(chunk), scale_down))
+                    stackImageWorkers.append([stackImagesECCWorker, np.array(chunk), scale_down])
                 elif method == "ORB":
-                    temp_stacked.append(
-                        stackImagesKeypointMatching(np.array(chunk))
-                    )
+                    stackImageWorkers.append([stackImagesKeypointMatching, np.array(chunk)])
             else:
                 temp_stacked.append(chunk[0])
+        
+        for stackImage in future_thread_executor(stackImageWorkers):
+            temp_stacked.append(stackImage)
+
         stacked = temp_stacked
 
     # Return the final stacked image
