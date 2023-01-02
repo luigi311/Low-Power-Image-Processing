@@ -46,6 +46,17 @@ def test_filter_low_contrast():
     assert len(filtered_images) == 4
 
 
+def test_shrink_images():
+    from utils.utils import shrink_images
+
+    _, ground_truth = setup_images()
+
+    # Shrink images
+    shrunk_images = shrink_images(ground_truth)
+
+    # Check if images are half the size
+    assert shrunk_images.shape[1] == ground_truth.shape[1] / 2
+
 def test_denoise_fast():
     from denoise.denoise import denoiser
 
