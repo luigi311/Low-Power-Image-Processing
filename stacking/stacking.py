@@ -2,6 +2,52 @@ import numpy as np
 import cv2
 
 
+def alignImageECC(
+    imageF,
+    shrunk_image,
+    first_image_shrunk,
+    shrink_factor,
+    warp_matrix,
+    warp_mode,
+    criteria,
+    h,
+    w,
+):
+    try:
+        # Estimate perspective transform
+        _, warp_matrix = cv2.findTransformECC(
+            first_image_shrunk,
+            cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY),
+            warp_matrix,
+            warp_mode,
+            criteria,
+        )
+
+        # Adjust the warp_matrix to the scale of the original images
+        warp_matrix = (
+            warp_matrix
+            * np.array(
+                [
+                    [1, 1, 1 / shrink_factor],
+                    [1, 1, 1 / shrink_factor],
+                    [shrink_factor, shrink_factor, 1],
+                ]
+            )
+        ).astype(np.float32)
+
+        # Align image to first image
+        image_align = cv2.warpPerspective(
+            imageF,
+            warp_matrix,
+            (h, w),
+            flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP,
+        )
+
+        return image_align
+    except:
+        return None
+
+
 def stackImagesECCWorker(numpy_array, scale_down=720):
     """
     Align and stack images with the ECC (Extended Correlation Coefficient) method.
@@ -57,12 +103,9 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
     )
 
     first_image = None
-    stacked_images = None
-
     first_image_shrunk = None
-
-    # Preallocate the stacked_images array
-    stacked_images = np.zeros(numpy_array[0].shape, dtype=np.float32)
+    stacked_image = None
+    count_stacked = 1
 
     for _, image in enumerate(numpy_array):
         imageF = image.astype(np.float32) / 255
@@ -71,39 +114,27 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
         if first_image is None:
             first_image = cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY)
             first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
-            stacked_images = imageF
+            stacked_image = imageF
         else:
-            # Estimate perspective transform
-            _, warp_matrix = cv2.findTransformECC(
+            image_align = alignImageECC(
+                imageF,
+                shrunk_image,
                 first_image_shrunk,
-                cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY),
+                shrink_factor,
                 warp_matrix,
                 warp_mode,
                 criteria,
+                h,
+                w,
             )
+            if image_align is None:
+                print("Failed to align image")
+            else:
+                stacked_image += image_align
+                count_stacked += 1
+                print("Aligned image")
 
-            # Adjust the warp_matrix to the scale of the original images
-            warp_matrix = (
-                warp_matrix
-                * np.array(
-                    [
-                        [1, 1, 1 / shrink_factor],
-                        [1, 1, 1 / shrink_factor],
-                        [shrink_factor, shrink_factor, 1],
-                    ]
-                )
-            ).astype(np.float32)
-
-            # Align image to first image
-            image_align = cv2.warpPerspective(
-                imageF,
-                warp_matrix,
-                (h, w),
-                flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP,
-            )
-            stacked_images += image_align
-
-    stacked_image = (stacked_images / len(numpy_array)) * 255
+    stacked_image = (stacked_image / count_stacked) * 255
     stacked_image = stacked_image.astype(np.uint8)
 
     return stacked_image
@@ -130,6 +161,7 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
     ]
 
     stacked = []
+
     # Stack each chunk using the ECC method
     for chunk in chunks:
         if len(chunk) > 1:
@@ -153,13 +185,14 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
         for chunk in chunks:
             if len(chunk) > 1:
                 if method == "ECC":
-                    temp_stacked.append(stackImagesECCWorker(np.array(chunk), scale_down))
-                elif method == "ORB":
                     temp_stacked.append(
-                        stackImagesKeypointMatching(np.array(chunk))
+                        stackImagesECCWorker(np.array(chunk), scale_down)
                     )
+                elif method == "ORB":
+                    temp_stacked.append(stackImagesKeypointMatching(np.array(chunk)))
             else:
                 temp_stacked.append(chunk[0])
+
         stacked = temp_stacked
 
     # Return the final stacked image

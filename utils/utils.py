@@ -2,7 +2,7 @@ import rawpy, cv2, os, h5py
 import numpy as np
 from skimage.exposure import is_low_contrast
 from requests import get
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 
 def process_raw(dng_file):
@@ -73,19 +73,19 @@ def loadImages(path):
             # Load the images from the hdf5 file into the numpy array
             with h5py.File(hdf5_file, "r") as hdf5:
                 numpy_array.append(np.array(hdf5["/images"][:]).astype(np.uint8))
-        
+
         # Concatenate the images in numpy_array along the first axis
         numpy_array = np.concatenate(numpy_array, axis=0)
     else:
-        # Iterate over the remaining files in the filtered list (dng and tiff files)
-        for file in process_file_list:
-            # Load the image into a numpy array
-            if file.endswith("dng"):
-                image = process_raw(file)
-            else:
-                image = cv2.imread(file)
-
-            numpy_array.append(image)
+        dng_files = [x for x in process_file_list if x.endswith("dng")]
+        tiff_files = [x for x in process_file_list if x.endswith("tiff")]
+        with ProcessPoolExecutor(max_workers=os.cpu_count() - 1) as executor:
+            if dng_files:
+                for result in executor.map(process_raw, dng_files):
+                    numpy_array.append(result)
+            if tiff_files:
+                for result in executor.map(cv2.imread, tiff_files):
+                    numpy_array.append(result)
 
     return np.array(numpy_array)
 
@@ -206,7 +206,7 @@ def future_thread_executor(args: list, workers: int = -1):
     results = []
 
     if workers == -1:
-        workers = os.cpu_count()
+        workers = os.cpu_count() - 1
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
         for arg in args:
