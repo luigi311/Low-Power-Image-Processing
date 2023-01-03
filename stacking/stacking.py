@@ -137,8 +137,7 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
     ]
 
     stacked = []
-    print("Stacing images...")
-    print(len(chunks))
+
     # Stack each chunk using the ECC method
     for chunk in chunks:
         if len(chunk) > 1:
@@ -151,7 +150,6 @@ def chunker(numpy_array, method="ECC", stacking_amount=3, scale_down=720):
 
     # While there are more than 1 image in the stacked array, keep stacking using the ECC method
     while len(stacked) > 1:
-        print("Looping\n\n\n\n")
         temp_stacked = []
         # Split the stacked array into chunks of size stacking_amount
         chunks = [
