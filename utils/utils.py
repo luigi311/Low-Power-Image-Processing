@@ -136,8 +136,8 @@ def filterLowContrast(numpy_array, scale_down=720):
     filtered_array = np.array(filtered_array)
 
     # If less than 2 images passed the low contrast filter, return a copy of the input array with the first image removed
-    if filtered_array.size < 2:
-        print("All images low contrast, skipping first image only")
+    if len(filtered_array) < 2:
+        print("Less than 2 images with good contrast, skipping first image only")
         return numpy_array[1:]
 
     # Return the filtered array
