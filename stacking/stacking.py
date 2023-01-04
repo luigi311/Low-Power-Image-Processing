@@ -71,7 +71,7 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
                 first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
                 stacked_image = imageF
             else:
-            
+
                 # Estimate perspective transform
                 _, temp_warp_matrix = cv2.findTransformECC(
                     first_image_shrunk,
@@ -105,10 +105,9 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
                 count_stacked += 1
 
                 warp_matrix = temp_warp_matrix
-                print("Aligned image")           
+                print("Aligned image")
         except:
             print("Failed to align image")
-
 
     stacked_image /= count_stacked
     stacked_image = (stacked_image * 255).astype(np.uint8)
@@ -212,10 +211,12 @@ def stackImagesKeypointMatching(numpy_array):
                 matches = matcher.match(first_des, des)
                 matches = sorted(matches, key=lambda x: x.distance)
 
-                src_pts = np.float32([first_kp[m.queryIdx].pt for m in matches]).reshape(
+                src_pts = np.float32(
+                    [first_kp[m.queryIdx].pt for m in matches]
+                ).reshape(-1, 1, 2)
+                dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(
                     -1, 1, 2
                 )
-                dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
 
                 # Estimate perspective transformation
                 M, _ = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)

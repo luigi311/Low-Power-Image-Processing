@@ -57,6 +57,7 @@ def test_shrink_images():
     # Check if images are half the size
     assert shrunk_images.shape[1] == ground_truth.shape[1] / 2
 
+
 def test_denoise_fast():
     from denoise.denoise import denoiser
 
