@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 def process_raw(dng_file):
     with rawpy.imread(dng_file) as raw:
-        rgb = raw.postprocess(
+        image = raw.postprocess(
             demosaic_algorithm=rawpy.DemosaicAlgorithm.AHD,
             use_auto_wb=True,
             half_size=False,
@@ -16,14 +16,13 @@ def process_raw(dng_file):
             no_auto_scale=False,
             output_color=rawpy.ColorSpace.sRGB,
             output_bps=8,
-            gamma=(1, 1),
+            gamma=(2.222, 4.5),
             highlight_mode=rawpy.HighlightMode(2),
             fbdd_noise_reduction=rawpy.FBDDNoiseReductionMode(0),
         )
 
-        rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
-
-        return rgb
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return image
 
 
 def save_hdf5(numpy_array, path):

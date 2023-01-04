@@ -18,10 +18,7 @@ def save_image(path, image, extension="png"):
 # Create main and do any processing if needed
 def single_image(images, input_dir, histogram_method, image_extension="png"):
     # Default to second image if exists if not first
-    if len(images) > 1:
-        image = images[1]
-    else:
-        image = images[0]
+    image = images[1] if len(images) > 1 else images[0]
 
     if histogram_method != "none":
         image = single_histogram_processing(image, histogram_method)
@@ -210,7 +207,7 @@ def main(args):
     if not os.path.isfile(os.path.join(image_folder, "images.hdf5")):
         # Filter low contrast images
         numpy_images = filterLowContrast(numpy_images, args.scale_down)
-    
+
         # Save filtered images to hdf5
         save_hdf5(numpy_images, image_folder)
 
