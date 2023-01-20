@@ -21,6 +21,5 @@ if [ "$COMMAND" = "--help" ] || [ "$COMMAND" = "-h" ]; then
 elif [ "$COMMAND" = "all_in_one" ]; then
     python all_in_one.py $FLAGS
 else
-    echo "Unknown command: $COMMAND calling directly"
     $COMMAND $FLAGS
 fi
