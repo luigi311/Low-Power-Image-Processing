@@ -34,7 +34,7 @@ def save_hdf5(numpy_array, path):
         )
 
 
-def loadImages(path):
+def loadImages(path, threads=None):
     """
     Load all dng, tiff or hdf5 images from a directory into a numpy array.
 
@@ -78,7 +78,9 @@ def loadImages(path):
     else:
         dng_files = [x for x in process_file_list if x.endswith("dng")]
         tiff_files = [x for x in process_file_list if x.endswith("tiff")]
-        with ProcessPoolExecutor(max_workers=os.cpu_count() - 1) as executor:
+        # Default to half the number of cpu cores due to rawpy using multiple threads
+        workers = threads if threads else max(os.cpu_count()/2, 1)
+        with ProcessPoolExecutor(max_workers=workers) as executor:
             if dng_files:
                 for result in executor.map(process_raw, dng_files):
                     numpy_array.append(result)

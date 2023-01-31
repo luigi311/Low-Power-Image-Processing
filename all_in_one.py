@@ -16,12 +16,12 @@ def save_image(path, image, extension="png"):
 
 
 # Create main and do any processing if needed
-def single_image(images, input_dir, histogram_method, image_extension="png"):
+def single_image(images, input_dir, histogram_method, image_extension="png", clip_limit=1.5, tile_grid_size=(8, 8)):
     # Default to second image if exists if not first
     image = images[1] if len(images) > 1 else images[0]
 
     if histogram_method != "none":
-        image = single_histogram_processing(image, histogram_method)
+        image = single_histogram_processing(image, histogram_method, clip_limit, tile_grid_size)
 
     output_image = os.path.join(input_dir, f"main.{image_extension}")
 
@@ -29,7 +29,7 @@ def single_image(images, input_dir, histogram_method, image_extension="png"):
     print(f"Saved {output_image}")
 
 
-def single_histogram_processing(image, histogram_method):
+def single_histogram_processing(image, histogram_method, clip_limit=1.5, tile_grid_size=(8, 8)):
     """
     Equalize the histogram of a single image.
 
@@ -45,7 +45,7 @@ def single_histogram_processing(image, histogram_method):
     if image.ndim == 2:
         # If the image is grayscale, apply the histogram enhancement method directly
         if histogram_method == "histogram_clahe":
-            clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+            clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
             image = clahe.apply(image)
         elif histogram_method == "histogram_equalize":
             image = cv2.equalizeHist(image)
@@ -56,7 +56,7 @@ def single_histogram_processing(image, histogram_method):
         yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
         # Apply the histogram enhancement method to the Y channel
         if histogram_method == "histogram_clahe":
-            clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+            clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
             yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
         elif histogram_method == "histogram_equalize":
             yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
@@ -68,7 +68,7 @@ def single_histogram_processing(image, histogram_method):
     return image
 
 
-def histogram_processing(numpy_array, histogram_method):
+def histogram_processing(numpy_array, histogram_method, clip_limit=1.5, tile_grid_size=(8, 8)):
     """
     Equalize the histograms of the images in a numpy array.
 
@@ -88,7 +88,7 @@ def histogram_processing(numpy_array, histogram_method):
     # Iterate over the images in the numpy array
     for i, image in enumerate(numpy_array):
         # Process the image
-        processed_array[i] = single_histogram_processing(image, histogram_method)
+        processed_array[i] = single_histogram_processing(image, histogram_method, clip_limit, tile_grid_size)
 
     return processed_array
 
@@ -107,6 +107,18 @@ def setup_args():
         default="none",
         help="histogram method to use",
         choices=["histogram_clahe", "histogram_equalize"],
+    )
+    parser.add_argument(
+        "--clip_limit",
+        default=1.5,
+        type=float,
+        help="Clip limit for histogram_clahe",
+    )
+    parser.add_argument(
+        "--tile_grid_size",
+        default=8,
+        type=int,
+        help="Tile grid size for histogram_clahe",
     )
     parser.add_argument(
         "--dehaze_method",
@@ -186,6 +198,12 @@ def setup_args():
         default=720,
         help="Scale down image to the following resolution for stacking and filter contrast",
     )
+    parser.add_argument(
+        "--parallel-raw",
+        type=int,
+        default=None,
+        help="Number of parallel pyraw processes to use",
+    )
 
     return parser.parse_args()
 
@@ -201,7 +219,7 @@ def main(args):
     image_folder = args.input_dir
 
     # Load all images
-    numpy_images = loadImages(image_folder)
+    numpy_images = loadImages(image_folder, args.parallel_raw)
 
     # if image_folder/images.hdf5 does not exists create hdf5 file containing filtered images
     if not os.path.isfile(os.path.join(image_folder, "images.hdf5")):
@@ -223,6 +241,8 @@ def main(args):
             args.input_dir,
             args.histogram_method,
             args.interal_image_extension,
+            args.clip_limit,
+            (args.tile_grid_size, args.tile_grid_size),
         )
 
         print(f"Created main image in {time() - main_tic} seconds")
@@ -243,7 +263,7 @@ def main(args):
     if args.histogram_method != "none":
         equalize_tic = time()
 
-        numpy_images = histogram_processing(numpy_images, args.histogram_method)
+        numpy_images = histogram_processing(numpy_images, args.histogram_method, args.clip_limit, (args.tile_grid_size, args.tile_grid_size))
 
         processed_image = True
         print(f"Histogram equalized in {time() - equalize_tic} seconds")
