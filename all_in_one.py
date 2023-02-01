@@ -204,6 +204,12 @@ def setup_args():
         default=None,
         help="Number of parallel pyraw processes to use",
     )
+    parser.add_argument(
+        "--sharpen",
+        help="Sharpen the postprocess image",
+        choices=["filter_kernel", "unsharp_mask"],
+        type=str
+    )
 
     return parser.parse_args()
 
@@ -316,6 +322,16 @@ def main(args):
             raise Exception(f"ERROR: Could not stack images\n{e}")
     else:
         image = numpy_images[0]
+
+    if args.sharpen:
+        from sharpen.sharpen import sharpen
+
+        print("Sharpen")
+        sharp_tic = time()
+        image = sharpen(image, args.sharpen)
+
+        processed_image = True
+        print(f"Sharpen image in {time() - sharp_tic} seconds")
 
     if args.denoise:
         try:
