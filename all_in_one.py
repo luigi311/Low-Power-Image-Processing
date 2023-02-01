@@ -199,7 +199,7 @@ def setup_args():
         help="Scale down image to the following resolution for stacking and filter contrast",
     )
     parser.add_argument(
-        "--parallel-raw",
+        "--parallel_raw",
         type=int,
         default=None,
         help="Number of parallel pyraw processes to use",
