@@ -64,7 +64,9 @@ jobs:
       # If commit is not a pull request checkout previous commit
       - name: Checkout previous commit (push)
         if: github.event_name == 'push'
-        run: git checkout HEAD^1
+        run: |
+          git config --global --add safe.directory /__w/Low-Power-Image-Processing/Low-Power-Image-Processing
+          git checkout HEAD^1
       
       # If commit is a pull request checkout base branch
       - name: Checkout base branch (pull request)
