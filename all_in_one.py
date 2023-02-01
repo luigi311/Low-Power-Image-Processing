@@ -6,93 +6,6 @@ from time import time
 from utils.utils import loadImages, filterLowContrast, save_hdf5, shrink_images
 
 
-def save_image(path, image, extension="png"):
-    if extension == "jpg":
-        cv2.imwrite(path, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-    elif extension == "png":
-        cv2.imwrite(path, image, [int(cv2.IMWRITE_PNG_COMPRESSION), 0])
-    else:
-        cv2.imwrite(path, image)
-
-
-# Create main and do any processing if needed
-def single_image(images, input_dir, histogram_method, image_extension="png", clip_limit=1.2, tile_grid_size=(8, 8)):
-    # Default to second image if exists if not first
-    image = images[1] if len(images) > 1 else images[0]
-
-    if histogram_method != "none":
-        image = single_histogram_processing(image, histogram_method, clip_limit, tile_grid_size)
-
-    output_image = os.path.join(input_dir, f"main.{image_extension}")
-
-    save_image(output_image, image, image_extension)
-    print(f"Saved {output_image}")
-
-
-def single_histogram_processing(image, histogram_method, clip_limit=1.2, tile_grid_size=(8, 8)):
-    """
-    Equalize the histogram of a single image.
-
-    Parameters:
-    image (np.ndarray): The image to process.
-    histogram_method (str): The method to use for histogram enhancement.
-
-    Returns:
-    np.ndarray: The processed image.
-
-    """
-    # Check if the image is a grayscale image or has multiple channels
-    if image.ndim == 2:
-        # If the image is grayscale, apply the histogram enhancement method directly
-        if histogram_method == "histogram_clahe":
-            clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
-            image = clahe.apply(image)
-        elif histogram_method == "histogram_equalize":
-            image = cv2.equalizeHist(image)
-        else:
-            raise Exception("ERROR: Unknown histogram method")
-    else:
-        # If the image has multiple channels, convert it to the YUV color space
-        yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
-        # Apply the histogram enhancement method to the Y channel
-        if histogram_method == "histogram_clahe":
-            clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
-            yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
-        elif histogram_method == "histogram_equalize":
-            yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
-        else:
-            raise Exception("ERROR: Unknown histogram method")
-        # Convert the image back to the RGB color space
-        image = cv2.cvtColor(yuv_image, cv2.COLOR_YUV2RGB)
-
-    return image
-
-
-def histogram_processing(numpy_array, histogram_method, clip_limit=1.2, tile_grid_size=(8, 8)):
-    """
-    Equalize the histograms of the images in a numpy array.
-
-    Parameters:
-    numpy_array (np.ndarray): A numpy array containing the images to process.
-    histogram_method (str): The method to use for histogram enhancement.
-
-    Returns:
-    np.ndarray: A numpy array containing the processed images.
-
-    """
-    print("Histogram equalizing images")
-
-    # Create a new numpy array to store the processed images
-    processed_array = np.empty(numpy_array.shape, dtype=numpy_array.dtype)
-
-    # Iterate over the images in the numpy array
-    for i, image in enumerate(numpy_array):
-        # Process the image
-        processed_array[i] = single_histogram_processing(image, histogram_method, clip_limit, tile_grid_size)
-
-    return processed_array
-
-
 def setup_args():
     parser = argparse.ArgumentParser(description="Process Image")
     parser.add_argument("input_dir", help="Input directory of images")
@@ -214,6 +127,93 @@ def setup_args():
     return parser.parse_args()
 
 
+def save_image(path, image, extension="png"):
+    if extension == "jpg":
+        cv2.imwrite(path, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+    elif extension == "png":
+        cv2.imwrite(path, image, [int(cv2.IMWRITE_PNG_COMPRESSION), 0])
+    else:
+        cv2.imwrite(path, image)
+
+
+# Create main and do any processing if needed
+def single_image(images, input_dir, histogram_method, image_extension="png", clip_limit=1.2, tile_grid_size=(8, 8)):
+    # Default to second image if exists if not first
+    image = images[1] if len(images) > 1 else images[0]
+
+    if histogram_method != "none":
+        image = single_histogram_processing(image, histogram_method, clip_limit, tile_grid_size)
+
+    output_image = os.path.join(input_dir, f"main.{image_extension}")
+
+    save_image(output_image, image, image_extension)
+    print(f"Saved {output_image}")
+
+
+def single_histogram_processing(image, histogram_method, clip_limit=1.2, tile_grid_size=(8, 8)):
+    """
+    Equalize the histogram of a single image.
+
+    Parameters:
+    image (np.ndarray): The image to process.
+    histogram_method (str): The method to use for histogram enhancement.
+
+    Returns:
+    np.ndarray: The processed image.
+
+    """
+    # Check if the image is a grayscale image or has multiple channels
+    if image.ndim == 2:
+        # If the image is grayscale, apply the histogram enhancement method directly
+        if histogram_method == "histogram_clahe":
+            clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
+            image = clahe.apply(image)
+        elif histogram_method == "histogram_equalize":
+            image = cv2.equalizeHist(image)
+        else:
+            raise Exception("ERROR: Unknown histogram method")
+    else:
+        # If the image has multiple channels, convert it to the YUV color space
+        yuv_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+        # Apply the histogram enhancement method to the Y channel
+        if histogram_method == "histogram_clahe":
+            clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
+            yuv_image[:, :, 0] = clahe.apply(yuv_image[:, :, 0])
+        elif histogram_method == "histogram_equalize":
+            yuv_image[:, :, 0] = cv2.equalizeHist(yuv_image[:, :, 0])
+        else:
+            raise Exception("ERROR: Unknown histogram method")
+        # Convert the image back to the RGB color space
+        image = cv2.cvtColor(yuv_image, cv2.COLOR_YUV2RGB)
+
+    return image
+
+
+def histogram_processing(numpy_array, histogram_method, clip_limit=1.2, tile_grid_size=(8, 8)):
+    """
+    Equalize the histograms of the images in a numpy array.
+
+    Parameters:
+    numpy_array (np.ndarray): A numpy array containing the images to process.
+    histogram_method (str): The method to use for histogram enhancement.
+
+    Returns:
+    np.ndarray: A numpy array containing the processed images.
+
+    """
+    print("Histogram equalizing images")
+
+    # Create a new numpy array to store the processed images
+    processed_array = np.empty(numpy_array.shape, dtype=numpy_array.dtype)
+
+    # Iterate over the images in the numpy array
+    for i, image in enumerate(numpy_array):
+        # Process the image
+        processed_array[i] = single_histogram_processing(image, histogram_method, clip_limit, tile_grid_size)
+
+    return processed_array
+
+
 # ===== MAIN =====
 def main(args):
     total_tic = time()
@@ -274,19 +274,6 @@ def main(args):
         processed_image = True
         print(f"Histogram equalized in {time() - equalize_tic} seconds")
 
-    if args.dehaze_method != "none":
-        dehaze_tic = time()
-
-        print("Dehazing images")
-        dehazed_images = []
-
-        from dehaze.dehaze import dehaze_images
-
-        numpy_images = dehaze_images(numpy_images, args.dehaze_method)
-
-        processed_image = True
-        print(f"Dehazed {len(dehazed_images)} images in {time() - dehaze_tic} seconds")
-
     if args.denoise_all:
         try:
             denoise_all_tic = time()
@@ -332,6 +319,19 @@ def main(args):
 
         processed_image = True
         print(f"Sharpen image in {time() - sharp_tic} seconds")
+    
+    if args.dehaze_method != "none":
+        dehaze_tic = time()
+
+        print("Dehazing images")
+        dehazed_images = []
+
+        from dehaze.dehaze import dehaze_image
+
+        image = dehaze_image(image, args.dehaze_method)
+
+        processed_image = True
+        print(f"Dehazed {len(dehazed_images)} images in {time() - dehaze_tic} seconds")
 
     if args.denoise:
         try:
