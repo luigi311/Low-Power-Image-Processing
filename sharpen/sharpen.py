@@ -22,12 +22,12 @@ def unsharp_mask(image, kernel_size=(5, 5), sigma=1.0, amount=1.0, threshold=0):
         np.copyto(sharpened, image, where=low_contrast_mask)
     return sharpened
 
-def sharpen(numpy_array, method="filter_kernel"):
+def sharpen(numpy_array, method="filter_kernel", amount=1.0):
     try:
         if method == "filter_kernel":
             return filter_kernel(numpy_array)
         elif method == "unsharp_mask":
-            return unsharp_mask(numpy_array)
+            return unsharp_mask(numpy_array, amount=amount)
         else:
             raise Exception(f"Sharpen Error: Sharpen method {method} not supported")
     except Exception as e:

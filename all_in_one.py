@@ -123,6 +123,12 @@ def setup_args():
         choices=["filter_kernel", "unsharp_mask"],
         type=str
     )
+    parser.add_argument(
+        "--sharpen_amount",
+        type=float,
+        default=1.0,
+        help="Sharpen amount for unsharp_mask"
+    )
 
     return parser.parse_args()
 
@@ -315,7 +321,7 @@ def main(args):
 
         print("Sharpen")
         sharp_tic = time()
-        image = sharpen(image, args.sharpen)
+        image = sharpen(image, args.sharpen, args.sharpen_amount)
 
         processed_image = True
         print(f"Sharpen image in {time() - sharp_tic} seconds")
