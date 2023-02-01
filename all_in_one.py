@@ -121,13 +121,13 @@ def setup_args():
         "--sharpen",
         help="Sharpen the postprocess image",
         choices=["filter_kernel", "unsharp_mask"],
-        type=str
+        type=str,
     )
     parser.add_argument(
         "--sharpen_amount",
         type=float,
         default=1.0,
-        help="Sharpen amount for unsharp_mask"
+        help="Sharpen amount for unsharp_mask",
     )
 
     return parser.parse_args()
@@ -143,12 +143,21 @@ def save_image(path, image, extension="png"):
 
 
 # Create main and do any processing if needed
-def single_image(images, input_dir, histogram_method, image_extension="png", clip_limit=1.2, tile_grid_size=(8, 8)):
+def single_image(
+    images,
+    input_dir,
+    histogram_method,
+    image_extension="png",
+    clip_limit=1.2,
+    tile_grid_size=(8, 8),
+):
     # Default to second image if exists if not first
     image = images[1] if len(images) > 1 else images[0]
 
     if histogram_method != "none":
-        image = single_histogram_processing(image, histogram_method, clip_limit, tile_grid_size)
+        image = single_histogram_processing(
+            image, histogram_method, clip_limit, tile_grid_size
+        )
 
     output_image = os.path.join(input_dir, f"main.{image_extension}")
 
@@ -156,7 +165,9 @@ def single_image(images, input_dir, histogram_method, image_extension="png", cli
     print(f"Saved {output_image}")
 
 
-def single_histogram_processing(image, histogram_method, clip_limit=1.2, tile_grid_size=(8, 8)):
+def single_histogram_processing(
+    image, histogram_method, clip_limit=1.2, tile_grid_size=(8, 8)
+):
     """
     Equalize the histogram of a single image.
 
@@ -195,7 +206,9 @@ def single_histogram_processing(image, histogram_method, clip_limit=1.2, tile_gr
     return image
 
 
-def histogram_processing(numpy_array, histogram_method, clip_limit=1.2, tile_grid_size=(8, 8)):
+def histogram_processing(
+    numpy_array, histogram_method, clip_limit=1.2, tile_grid_size=(8, 8)
+):
     """
     Equalize the histograms of the images in a numpy array.
 
@@ -215,15 +228,15 @@ def histogram_processing(numpy_array, histogram_method, clip_limit=1.2, tile_gri
     # Iterate over the images in the numpy array
     for i, image in enumerate(numpy_array):
         # Process the image
-        processed_array[i] = single_histogram_processing(image, histogram_method, clip_limit, tile_grid_size)
+        processed_array[i] = single_histogram_processing(
+            image, histogram_method, clip_limit, tile_grid_size
+        )
 
     return processed_array
 
 
 # ===== MAIN =====
 def main(args):
-    total_tic = time()
-
     # Flag to indicate if any processing was done on the image
     processed_image = False
 
@@ -275,7 +288,12 @@ def main(args):
     if args.histogram_method != "none":
         equalize_tic = time()
 
-        numpy_images = histogram_processing(numpy_images, args.histogram_method, args.clip_limit, (args.tile_grid_size, args.tile_grid_size))
+        numpy_images = histogram_processing(
+            numpy_images,
+            args.histogram_method,
+            args.clip_limit,
+            (args.tile_grid_size, args.tile_grid_size),
+        )
 
         processed_image = True
         print(f"Histogram equalized in {time() - equalize_tic} seconds")
@@ -325,7 +343,7 @@ def main(args):
 
         processed_image = True
         print(f"Sharpen image in {time() - sharp_tic} seconds")
-    
+
     if args.dehaze_method != "none":
         dehaze_tic = time()
 
@@ -403,13 +421,16 @@ def main(args):
 
         print(f"Saved {output_image} in {time() - process_tic}")
 
-    print(f"Total {time() - total_tic} seconds")
-
 
 if __name__ == "__main__":
     try:
+        total_tic = time()
+
         args = setup_args()
         main(args)
+
+        print(f"Total {time() - total_tic} seconds")
+
     except Exception as error:
         if isinstance(error, list):
             for message in error:

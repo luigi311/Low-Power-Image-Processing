@@ -2,6 +2,7 @@ import numpy as np
 
 from dehaze.darktables.darktables import dehaze_darktables
 
+
 def dehaze_image(image, method):
     """
     Dehaze a single image.
@@ -18,8 +19,9 @@ def dehaze_image(image, method):
         out_image = dehaze_darktables(image)
     else:
         raise Exception("ERROR: Unknown dehazing method")
-    
+
     return out_image
+
 
 def dehaze_images(numpy_images, method):
     """
@@ -37,5 +39,5 @@ def dehaze_images(numpy_images, method):
     for image in numpy_images:
         out_image = dehaze_image(image, method)
         dehazed_images.append(out_image)
-    
+
     return np.array(dehazed_images)
