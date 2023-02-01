@@ -27,7 +27,7 @@ def denoiser(image, method, amount):
         print(f"Denoising image via {method} with amount {amount}")
 
         if method == "fast":
-            from denoise.opencv_denoise.opencv_denoise import fastDenoiseImage
+            from denoise.fast.fast import fastDenoiseImage
 
             image = fastDenoiseImage(image, amount)
 
