@@ -1,5 +1,6 @@
 import rawpy, cv2, os, h5py
 import numpy as np
+from math import floor
 from skimage.exposure import is_low_contrast
 from requests import get
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
@@ -79,7 +80,7 @@ def loadImages(path, threads=None):
         dng_files = [x for x in process_file_list if x.endswith("dng")]
         tiff_files = [x for x in process_file_list if x.endswith("tiff")]
         # Default to half the number of cpu cores due to rawpy using multiple threads
-        workers = threads if threads else max(os.cpu_count()/2, 1)
+        workers = threads if threads else max(floor(os.cpu_count()/2), 1)
         with ProcessPoolExecutor(max_workers=workers) as executor:
             if dng_files:
                 for result in executor.map(process_raw, dng_files):
