@@ -16,7 +16,7 @@ def save_image(path, image, extension="png"):
 
 
 # Create main and do any processing if needed
-def single_image(images, input_dir, histogram_method, image_extension="png", clip_limit=1.5, tile_grid_size=(8, 8)):
+def single_image(images, input_dir, histogram_method, image_extension="png", clip_limit=1.2, tile_grid_size=(8, 8)):
     # Default to second image if exists if not first
     image = images[1] if len(images) > 1 else images[0]
 
@@ -29,7 +29,7 @@ def single_image(images, input_dir, histogram_method, image_extension="png", cli
     print(f"Saved {output_image}")
 
 
-def single_histogram_processing(image, histogram_method, clip_limit=1.5, tile_grid_size=(8, 8)):
+def single_histogram_processing(image, histogram_method, clip_limit=1.2, tile_grid_size=(8, 8)):
     """
     Equalize the histogram of a single image.
 
@@ -68,7 +68,7 @@ def single_histogram_processing(image, histogram_method, clip_limit=1.5, tile_gr
     return image
 
 
-def histogram_processing(numpy_array, histogram_method, clip_limit=1.5, tile_grid_size=(8, 8)):
+def histogram_processing(numpy_array, histogram_method, clip_limit=1.2, tile_grid_size=(8, 8)):
     """
     Equalize the histograms of the images in a numpy array.
 
@@ -110,7 +110,7 @@ def setup_args():
     )
     parser.add_argument(
         "--clip_limit",
-        default=1.5,
+        default=1.2,
         type=float,
         help="Clip limit for histogram_clahe",
     )
