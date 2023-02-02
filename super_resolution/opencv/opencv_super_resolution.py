@@ -2,6 +2,7 @@ import cv2, os
 from pathlib import Path
 from utils.utils import downloader
 
+
 # super resolution image
 def opencv_super_resolution(image, method, scale):
     model_path = Path(__file__).parent.absolute()

@@ -54,7 +54,6 @@ class FFDNet(nn.Module):
         self.m_up = nn.PixelShuffle(upscale_factor=sf)
 
     def forward(self, x, sigma):
-
         h, w = x.size()[-2:]
         paddingBottom = int(np.ceil(h / 2) * 2 - h)
         paddingRight = int(np.ceil(w / 2) * 2 - w)

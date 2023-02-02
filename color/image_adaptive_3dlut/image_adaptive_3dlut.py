@@ -57,7 +57,6 @@ def image_adaptive_3dlut(image, input_color_space):
     classifier.eval()
 
     def generate_LUT(img):
-
         pred = classifier(img).squeeze()
 
         LUT = (

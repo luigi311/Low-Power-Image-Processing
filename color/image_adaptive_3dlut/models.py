@@ -28,7 +28,6 @@ class resnet18_224(nn.Module):
         self.model = net
 
     def forward(self, x):
-
         x = self.upsample(x)
         if self.aug_test:
             # x = torch.cat((x, torch.rot90(x, 1, [2, 3]), torch.rot90(x, 3, [2, 3])), 0)
@@ -272,7 +271,6 @@ class Generator3DLUT_identity(nn.Module):
         self.TrilinearInterpolation = TrilinearInterpolation()
 
     def forward(self, x):
-
         return self.TrilinearInterpolation(self.LUT, x)
 
 
@@ -287,13 +285,11 @@ class Generator3DLUT_zero(nn.Module):
         self.TrilinearInterpolation = TrilinearInterpolation()
 
     def forward(self, x):
-
         return self.TrilinearInterpolation(self.LUT, x)
 
 
 class TrilinearInterpolation(torch.autograd.Function):
     def forward(self, LUT, x):
-
         x = x.contiguous()
         output = x.new(x.size())
         dim = LUT.size()[-1]
@@ -340,7 +336,6 @@ class TrilinearInterpolation(torch.autograd.Function):
         return output
 
     def backward(self, grad_x):
-
         grad_LUT = torch.zeros(3, self.dim, self.dim, self.dim, dtype=torch.float)
 
         if grad_x.is_cuda:
@@ -398,7 +393,6 @@ class TV_3D(nn.Module):
         self.relu = torch.nn.ReLU()
 
     def forward(self, LUT):
-
         dif_r = LUT.LUT[:, :, :, :-1] - LUT.LUT[:, :, :, 1:]
         dif_g = LUT.LUT[:, :, :-1, :] - LUT.LUT[:, :, 1:, :]
         dif_b = LUT.LUT[:, :-1, :, :] - LUT.LUT[:, 1:, :, :]

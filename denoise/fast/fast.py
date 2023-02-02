@@ -1,5 +1,6 @@
 import cv2
 
+
 # fast denoise image
 def fastDenoiseImage(image, denoise_amount):
     image = cv2.fastNlMeansDenoisingColored(

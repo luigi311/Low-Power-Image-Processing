@@ -9,7 +9,6 @@ from utils.utils import downloader
 
 # fddnet denoise image
 def fddnetDenoiseImage(image, denoise_amount):
-
     # ----------------------------------------
     # Preparation
     # ----------------------------------------

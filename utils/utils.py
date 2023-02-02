@@ -6,11 +6,11 @@ from requests import get
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 
-def process_raw(dng_file):
+def process_raw(dng_file, auto_white_balance=False):
     with rawpy.imread(dng_file) as raw:
         image = raw.postprocess(
             demosaic_algorithm=rawpy.DemosaicAlgorithm.AHD,
-            use_auto_wb=True,
+            use_auto_wb= auto_white_balance,
             half_size=False,
             no_auto_bright=True,
             auto_bright_thr=0.01,
@@ -35,7 +35,7 @@ def save_hdf5(numpy_array, path):
         )
 
 
-def loadImages(path, threads=None):
+def loadImages(path, threads=None, auto_white_balance=False):
     """
     Load all dng, tiff or hdf5 images from a directory into a numpy array.
 
@@ -80,10 +80,10 @@ def loadImages(path, threads=None):
         dng_files = [x for x in process_file_list if x.endswith("dng")]
         tiff_files = [x for x in process_file_list if x.endswith("tiff")]
         # Default to half the number of cpu cores due to rawpy using multiple threads
-        workers = threads if threads else max(floor(os.cpu_count()/2), 1)
+        workers = threads if threads else max(floor(os.cpu_count() / 2), 1)
         with ProcessPoolExecutor(max_workers=workers) as executor:
             if dng_files:
-                for result in executor.map(process_raw, dng_files):
+                for result in executor.map(process_raw, dng_files, [auto_white_balance] * len(dng_files)):
                     numpy_array.append(result)
             if tiff_files:
                 for result in executor.map(cv2.imread, tiff_files):
