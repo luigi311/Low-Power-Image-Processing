@@ -134,7 +134,11 @@ def setup_args():
         default=1.0,
         help="Sharpen amount for unsharp_mask",
     )
-
+    parser.add_argument(
+        "--auto_white_balance",
+        help="Auto white balance the image",
+        action="store_true",
+    )
     return parser.parse_args()
 
 
@@ -249,7 +253,7 @@ def main(args):
     image_folder = args.input_dir
 
     # Load all images
-    numpy_images = loadImages(image_folder, args.parallel_raw)
+    numpy_images = loadImages(image_folder, args.parallel_raw, args.auto_white_balance)
 
     # if image_folder/images.hdf5 does not exists create hdf5 file containing filtered images
     if not os.path.isfile(os.path.join(image_folder, "images.hdf5")):
