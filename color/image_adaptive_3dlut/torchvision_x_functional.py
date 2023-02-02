@@ -26,6 +26,7 @@ __numpy_type_map = {
 
 # NOTE: all the function should recive the ndarray like image, should be W x H x C or W x H
 
+
 # 如果将所有输出的维度够搞成height，width，channel 那么可以不用to_tensor??, 不行
 def preserve_channel_dim(func):
     """Preserve dummy channel dim."""
@@ -433,7 +434,6 @@ def center_crop(img, output_size):
 
 
 def resized_crop(img, top, left, height, width, size, interpolation=Image.BILINEAR):
-
     img = crop(img, top, left, height, width)
     img = resize(img, size, interpolation)
     return img
@@ -580,9 +580,7 @@ def bbox_resize(bboxes, img_size, target_size):
     ratio_height = target_size[0] / img_size[0]
     ratio_width = target_size[1] / img_size[1]
 
-    return bboxes[
-        ...,
-    ] * [ratio_width, ratio_height, ratio_width, ratio_height]
+    return bboxes[...,] * [ratio_width, ratio_height, ratio_width, ratio_height]
 
 
 def bbox_crop(bboxes, top, left, height, width):

@@ -71,7 +71,6 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
                 first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
                 stacked_image = imageF
             else:
-
                 # Estimate perspective transform
                 _, temp_warp_matrix = cv2.findTransformECC(
                     first_image_shrunk,

@@ -947,7 +947,6 @@ class NonLocalBlock2D(nn.Module):
         downsample_mode="maxpool",
         negative_slope=0.2,
     ):
-
         super(NonLocalBlock2D, self).__init__()
 
         inter_nc = nc // 2

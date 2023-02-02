@@ -3,7 +3,12 @@ import numpy as np
 
 from time import time
 
-from utils.utils import loadImages, filterLowContrast, save_hdf5, shrink_images
+from utils.utils import (
+    loadImages,
+    filterLowContrast,
+    save_hdf5,
+    shrink_images,
+)
 
 
 def setup_args():
