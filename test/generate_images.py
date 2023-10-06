@@ -13,7 +13,7 @@ parent = os.path.dirname(current)
 # the sys.path.
 sys.path.append(parent)
 
-from utils.utils import loadImages
+from images.images import loadImages
 
 
 def noisy(image):
@@ -54,7 +54,6 @@ def generate_noise():
     # Save noisy images
     for i, image in enumerate(noisy_images):
         cv2.imwrite(f"test/noisy_images/{i}.tiff", image)
-
 
 
 generate_noise()

@@ -87,7 +87,8 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
                         [1, 1, 1 / shrink_factor],
                         [1, 1, 1 / shrink_factor],
                         [shrink_factor, shrink_factor, 1],
-                    ], dtype=np.float32
+                    ],
+                    dtype=np.float32,
                 )
 
                 # Align image to first image
