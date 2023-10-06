@@ -7,24 +7,27 @@ from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 
 def process_raw(dng_file, half_size=False, auto_white_balance=False):
-    with rawpy.imread(dng_file) as raw:
-        image = raw.postprocess(
-            demosaic_algorithm=rawpy.DemosaicAlgorithm.AHD,
-            use_auto_wb=auto_white_balance,
-            half_size=half_size,
-            no_auto_bright=True,
-            auto_bright_thr=0.01,
-            no_auto_scale=False,
-            output_color=rawpy.ColorSpace.sRGB,
-            output_bps=8,
-            gamma=(2.222, 4.5),
-            highlight_mode=rawpy.HighlightMode(2),
-            fbdd_noise_reduction=rawpy.FBDDNoiseReductionMode(0),
-        )
+    raw = rawpy.imread(dng_file)
 
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        return image
+    raw_params = {
+        "demosaic_algorithm": rawpy.DemosaicAlgorithm.AHD,
+        "use_auto_wb": auto_white_balance,
+        "half_size": half_size,
+        "no_auto_bright": True,
+        "auto_bright_thr": 0.01,
+        "no_auto_scale": False,
+        "output_color": rawpy.ColorSpace.sRGB,
+        "output_bps": 8,
+        "gamma": (2.222, 4.5),
+        "highlight_mode": rawpy.HighlightMode(2),
+        "fbdd_noise_reduction": rawpy.FBDDNoiseReductionMode(0),
+    }
 
+    image = raw.postprocess(**raw_params)
+
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    return image
 
 def generate_exif(path: str):
     tiff_files, dng_files = files(path)
