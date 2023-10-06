@@ -73,7 +73,6 @@ def setup_args():
         choices=["ORB", "ECC"],
         default="ECC",
     )
-    parser.add_argument("--show", help="Show result image", action="store_true")
     parser.add_argument(
         "--denoise_all",
         help="Denoise all images prior to stacking",

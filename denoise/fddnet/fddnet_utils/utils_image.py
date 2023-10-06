@@ -48,16 +48,6 @@ def get_timestamp():
     return datetime.now().strftime("%y%m%d-%H%M%S")
 
 
-def imshow(x, title=None, cbar=False, figsize=None):
-    plt.figure(figsize=figsize)
-    plt.imshow(np.squeeze(x), interpolation="nearest", cmap="gray")
-    if title:
-        plt.title(title)
-    if cbar:
-        plt.colorbar()
-    plt.show()
-
-
 def surf(Z, cmap="rainbow", figsize=None):
     plt.figure(figsize=figsize)
     ax3 = plt.axes(projection="3d")
@@ -1111,11 +1101,8 @@ if __name__ == "__main__":
     img = imread_uint("test.bmp", 3)
 #    img = uint2single(img)
 #    img_bicubic = imresize_np(img, 1/4)
-#    imshow(single2uint(img_bicubic))
 #
 #    img_tensor = single2tensor4(img)
-#    for i in range(8):
-#        imshow(np.concatenate((augment_img(img, i), tensor2single(augment_img_tensor4(img_tensor, i))), 1))
 
 #    patches = patches_from_image(img, p_size=128, p_overlap=0, p_max=200)
 #    imssave(patches,'a.png')
