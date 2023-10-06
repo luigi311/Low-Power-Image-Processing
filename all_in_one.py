@@ -168,6 +168,7 @@ def single_image(
     image_extension="png",
     quality=95,
     denoise=False,
+    denoise_method="fast",
     denoise_amount=2,
     sharpen_method=None,
     sharpen_amount=1.0,
@@ -178,10 +179,10 @@ def single_image(
         )
 
     if denoise:
-        image = denoiser(image, denoise_amount)
+        image = denoiser(image, denoise_method, denoise_amount)
 
     if sharpen_method:
-        image = sharpen(image, method=sharpen_method, amount=sharpen_amount)
+        image = sharpen(image, sharpen_method, sharpen_amount)
 
     output_image = os.path.join(input_dir, f"main.{image_extension}")
 
@@ -295,6 +296,7 @@ def main(args):
         args.internal_image_extension,
         args.quality,
         args.denoise,
+        args.denoise_method,
         args.denoise_amount,
         args.sharpen,
         args.sharpen_amount,
