@@ -1,17 +1,16 @@
-import rawpy, cv2, os, h5py
+import rawpy, cv2, os, exif, exifread
 import numpy as np
 from math import floor
 from skimage.exposure import is_low_contrast
-from requests import get
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 
-def process_raw(dng_file, auto_white_balance=False):
+def process_raw(dng_file, half_size=False, auto_white_balance=False):
     with rawpy.imread(dng_file) as raw:
         image = raw.postprocess(
             demosaic_algorithm=rawpy.DemosaicAlgorithm.AHD,
-            use_auto_wb= auto_white_balance,
-            half_size=False,
+            use_auto_wb=auto_white_balance,
+            half_size=half_size,
             no_auto_bright=True,
             auto_bright_thr=0.01,
             no_auto_scale=False,
@@ -26,26 +25,23 @@ def process_raw(dng_file, auto_white_balance=False):
         return image
 
 
-def save_hdf5(numpy_array, path):
-    print("Saving hdf5 file")
+def read_exif(path: str):
+    tiff_files, dng_files = files(path)
 
-    with h5py.File(f"{path}/images.hdf5", "w") as hdf5:
-        hdf5.create_dataset(
-            "images", np.shape(numpy_array), h5py.h5t.STD_U8BE, data=numpy_array
-        )
+    image = tiff_files[-1] if tiff_files else dng_files[-1]
+
+    with open(image, "rb") as image_file:
+        tags = exifread.process_file(image_file, details=False)
+
+    # Convert all tags to strings
+    for key, value in tags.items():
+        tags[key] = str(value)
+
+    print(tags)
+    return tags
 
 
-def loadImages(path, threads=None, auto_white_balance=False):
-    """
-    Load all dng, tiff or hdf5 images from a directory into a numpy array.
-
-    Parameters:
-    path (str): The path to the directory containing the images.
-
-    Returns:
-    np.ndarray: A numpy array containing all the images in the directory.
-
-    """
+def files(path):
     # Check if the path exists and is a directory
     if not os.path.exists(path) or not os.path.isdir(path):
         raise ValueError(f"ERROR {path} is not a valid directory.")
@@ -59,37 +55,83 @@ def loadImages(path, threads=None, auto_white_balance=False):
 
     # Filter the list to only include dng, tiff, and hdf5 files
     process_file_list = [
-        os.path.join(path, x) for x in file_list if x.endswith(("dng", "tiff", "hdf5"))
+        os.path.join(path, x) for x in file_list if x.endswith(("dng", "tiff"))
     ]
 
-    # Preallocate the numpy array with the same dtype as the first image in the file list
-    numpy_array = []
+    # Check if there are any dng or tiff files in the directory
+    dng_files = [x for x in process_file_list if x.endswith("dng")]
+    tiff_files = [x for x in process_file_list if x.endswith("tiff")]
 
-    # Check if there are any hdf5 files in the filtered list
-    hdf5_files = [x for x in process_file_list if x.endswith("hdf5")]
-    if hdf5_files:
-        print("Loading hdf5 files")
-        for hdf5_file in hdf5_files:
-            # Load the images from the hdf5 file into the numpy array
-            with h5py.File(hdf5_file, "r") as hdf5:
-                numpy_array.append(np.array(hdf5["/images"][:]).astype(np.uint8))
+    return dng_files, tiff_files
 
-        # Concatenate the images in numpy_array along the first axis
-        numpy_array = np.concatenate(numpy_array, axis=0)
+
+def loadImages(path, threads=None, half_size=False, auto_white_balance=False):
+    """
+    Load all dng, tiff or hdf5 images from a directory into a numpy array.
+
+    Parameters:
+    path (str): The path to the directory containing the images.
+
+    Returns:
+    np.ndarray: A numpy array containing all the images in the directory.
+
+    """
+
+    dng_files, tiff_files = files(path)
+
+    images = []
+
+    # Default to half the number of cpu cores due to rawpy using multiple threads
+    workers = threads if threads else max(floor(os.cpu_count() / 2), 1)
+    # Instead of appending, concatenate the result images to numpy_array
+    with ProcessPoolExecutor(max_workers=workers) as executor:
+        if dng_files:
+            for result_image in executor.map(
+                process_raw,
+                dng_files,
+                [half_size] * len(dng_files),
+                [auto_white_balance] * len(dng_files),
+            ):
+                images.append(result_image)
+
+        if tiff_files:
+            for result_image in executor.map(cv2.imread, tiff_files):
+                images.append(result_image)
+
+    return np.array(images)
+
+
+def save_image(path, image, extension="png", quality=95, exif_data=None):
+    add_exif = False
+    if extension == "jpg":
+        cv2.imwrite(path, image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
+        add_exif = True
+    elif extension == "png":
+        cv2.imwrite(path, image, [int(cv2.IMWRITE_PNG_COMPRESSION), 0])
     else:
-        dng_files = [x for x in process_file_list if x.endswith("dng")]
-        tiff_files = [x for x in process_file_list if x.endswith("tiff")]
-        # Default to half the number of cpu cores due to rawpy using multiple threads
-        workers = threads if threads else max(floor(os.cpu_count() / 2), 1)
-        with ProcessPoolExecutor(max_workers=workers) as executor:
-            if dng_files:
-                for result in executor.map(process_raw, dng_files, [auto_white_balance] * len(dng_files)):
-                    numpy_array.append(result)
-            if tiff_files:
-                for result in executor.map(cv2.imread, tiff_files):
-                    numpy_array.append(result)
+        cv2.imwrite(path, image)
 
-    return np.array(numpy_array)
+    print("Saved image to", path)
+    if exif_data and add_exif:
+        with open(path, "rb") as image_file:
+            tags = exif.Image(image_file)
+            tags.make = exif_data.get("Image Make")
+            tags.model = exif_data.get("Image Model")
+            tags.software = exif_data.get("Image Software")
+            tags.datetime = exif_data.get("Image DateTime")
+            tags.exposure_time = exif_data.get("EXIF ExposureTime")
+            tags.f_number = exif_data.get("EXIF FNumber")
+            tags.iso = exif_data.get("EXIF ISOSpeedRatings")
+            tags.datetime_original = exif_data.get("EXIF DateTimeOriginal")
+            tags.datetime_digitized = exif_data.get("EXIF DateTimeDigitized")
+            if "not" in exif_data.get("EXIF Flash"):
+                tags.flash = False
+            tags.focal_length = exif_data.get("EXIF FocalLength")
+
+        with open(path, "wb") as image_file:
+            image_file.write(tags.get_file())
+
+        print("Saved exif data to", path)
 
 
 def filterLowContrast(numpy_array, scale_down=720):
@@ -144,20 +186,6 @@ def filterLowContrast(numpy_array, scale_down=720):
 
     # Return the filtered array
     return filtered_array
-
-
-def fixContrast(image):
-    # get darkest and brightest pixel
-    min_pixel = np.min(image)
-    max_pixel = np.max(image)
-
-    # Subtract darkest pixel from all pixels
-    image = image - min_pixel
-
-    # multiply to bring white to max_pixel
-    image = image * (max_pixel / 255)
-
-    return image
 
 
 def shrink_images(numpy_array):
