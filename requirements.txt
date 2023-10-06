@@ -1,4 +1,4 @@
-opencv-contrib-python
+opencv-contrib-python-headless
 scikit-image
 numpy
 requests
