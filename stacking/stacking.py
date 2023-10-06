@@ -48,49 +48,47 @@ def stackImagesECCWorker(numpy_array, scale_down=720):
 
     # Specify the threshold of the increment in the correlation coefficient
     # between two iterations
-    termination_eps = 1e-10
+    termination_eps = 0.001
 
     criteria = (
-        cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT,
+        cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT,
         number_of_iterations,
         termination_eps,
     )
 
-    first_image = None
     first_image_shrunk = None
     stacked_image = None
     count_stacked = 1
 
-    for _, image in enumerate(numpy_array):
+    for image in numpy_array:
         try:
+            # Convert image to float32 and normalize
             imageF = image.astype(np.float32) / 255
+            # Resize image
             shrunk_image = cv2.resize(image, (0, 0), fx=shrink_factor, fy=shrink_factor)
             # Convert to gray scale floating point image
-            if first_image is None:
-                first_image = cv2.cvtColor(imageF, cv2.COLOR_RGB2GRAY)
-                first_image_shrunk = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
+            gray_shrunk_image = cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY)
+            if first_image_shrunk is None:
+                first_image_shrunk = gray_shrunk_image
                 stacked_image = imageF
             else:
                 # Estimate perspective transform
                 _, temp_warp_matrix = cv2.findTransformECC(
                     first_image_shrunk,
-                    cv2.cvtColor(shrunk_image, cv2.COLOR_RGB2GRAY),
+                    gray_shrunk_image,
                     warp_matrix,
                     warp_mode,
                     criteria,
                 )
 
                 # Adjust the warp_matrix to the scale of the original images
-                temp_warp_matrix = (
-                    temp_warp_matrix
-                    * np.array(
-                        [
-                            [1, 1, 1 / shrink_factor],
-                            [1, 1, 1 / shrink_factor],
-                            [shrink_factor, shrink_factor, 1],
-                        ]
-                    )
-                ).astype(np.float32)
+                temp_warp_matrix = temp_warp_matrix * np.array(
+                    [
+                        [1, 1, 1 / shrink_factor],
+                        [1, 1, 1 / shrink_factor],
+                        [shrink_factor, shrink_factor, 1],
+                    ], dtype=np.float32
+                )
 
                 # Align image to first image
                 image_align = cv2.warpPerspective(
