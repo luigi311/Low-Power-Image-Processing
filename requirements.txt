@@ -6,3 +6,4 @@ rawpy
 imageio
 matplotlib
 exif
+ExifRead

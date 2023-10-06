@@ -4,7 +4,7 @@ import numpy as np
 from time import time
 
 from utils.utils import (
-    read_exif,
+    generate_exif,
     loadImages,
     filterLowContrast,
     save_image,
@@ -161,7 +161,6 @@ def setup_args():
 # Create main and do any processing if needed
 def single_image(
     image,
-    exif_data,
     input_dir,
     histogram_method,
     clip_limit=1.2,
@@ -186,7 +185,7 @@ def single_image(
 
     output_image = os.path.join(input_dir, f"main.{image_extension}")
 
-    save_image(output_image, image, image_extension, quality, exif_data)
+    save_image(output_image, image, image_extension, quality)
     print(f"Saved {output_image}")
 
 
@@ -276,14 +275,11 @@ def main(args):
         args.auto_white_balance,
     )
 
-    print(type(numpy_images))
-    print(numpy_images.shape)
-
     # Filter low contrast images
     numpy_images = filterLowContrast(numpy_images, args.scale_down)
 
     # Load exif data
-    exif_data = read_exif(image_folder)
+    generate_exif(image_folder)
 
     print(f"Loaded {len(numpy_images)} images in {(time() - loading_tic)} seconds")
 
@@ -292,7 +288,6 @@ def main(args):
 
     single_image(
         numpy_images[0],
-        exif_data,
         args.input_dir,
         args.histogram_method,
         args.clip_limit,

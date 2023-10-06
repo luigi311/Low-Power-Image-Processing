@@ -1,6 +1,7 @@
-import rawpy, cv2, os, exif, exifread
+import rawpy, cv2, os, exifread
 import numpy as np
 from math import floor
+from requests import get
 from skimage.exposure import is_low_contrast
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
@@ -25,7 +26,7 @@ def process_raw(dng_file, half_size=False, auto_white_balance=False):
         return image
 
 
-def read_exif(path: str):
+def generate_exif(path: str):
     tiff_files, dng_files = files(path)
 
     image = tiff_files[-1] if tiff_files else dng_files[-1]
@@ -37,8 +38,9 @@ def read_exif(path: str):
     for key, value in tags.items():
         tags[key] = str(value)
 
-    print(tags)
-    return tags
+    # Save exif data to a file
+    with open(os.path.join(path, "exif.txt"), "w") as exif_file:
+        exif_file.write(str(tags))
 
 
 def files(path):
@@ -101,37 +103,13 @@ def loadImages(path, threads=None, half_size=False, auto_white_balance=False):
     return np.array(images)
 
 
-def save_image(path, image, extension="png", quality=95, exif_data=None):
-    add_exif = False
+def save_image(path, image, extension="png", quality=95):
     if extension == "jpg":
         cv2.imwrite(path, image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
-        add_exif = True
     elif extension == "png":
         cv2.imwrite(path, image, [int(cv2.IMWRITE_PNG_COMPRESSION), 0])
     else:
         cv2.imwrite(path, image)
-
-    print("Saved image to", path)
-    if exif_data and add_exif:
-        with open(path, "rb") as image_file:
-            tags = exif.Image(image_file)
-            tags.make = exif_data.get("Image Make")
-            tags.model = exif_data.get("Image Model")
-            tags.software = exif_data.get("Image Software")
-            tags.datetime = exif_data.get("Image DateTime")
-            tags.exposure_time = exif_data.get("EXIF ExposureTime")
-            tags.f_number = exif_data.get("EXIF FNumber")
-            tags.iso = exif_data.get("EXIF ISOSpeedRatings")
-            tags.datetime_original = exif_data.get("EXIF DateTimeOriginal")
-            tags.datetime_digitized = exif_data.get("EXIF DateTimeDigitized")
-            if "not" in exif_data.get("EXIF Flash"):
-                tags.flash = False
-            tags.focal_length = exif_data.get("EXIF FocalLength")
-
-        with open(path, "wb") as image_file:
-            image_file.write(tags.get_file())
-
-        print("Saved exif data to", path)
 
 
 def filterLowContrast(numpy_array, scale_down=720):

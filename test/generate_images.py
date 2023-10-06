@@ -13,7 +13,7 @@ parent = os.path.dirname(current)
 # the sys.path.
 sys.path.append(parent)
 
-from utils.utils import loadImages, save_hdf5
+from utils.utils import loadImages
 
 
 def noisy(image):
@@ -55,8 +55,6 @@ def generate_noise():
     for i, image in enumerate(noisy_images):
         cv2.imwrite(f"test/noisy_images/{i}.tiff", image)
 
-    # Generate hdf5 file so pytest parallel works
-    save_hdf5(noisy_images, "test/noisy_images")
 
 
 generate_noise()
