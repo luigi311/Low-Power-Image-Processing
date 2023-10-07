@@ -1,51 +1,10 @@
-import rawpy, cv2, os, h5py
-import numpy as np
-from math import floor
-from skimage.exposure import is_low_contrast
+import os
+
 from requests import get
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 
 
-def process_raw(dng_file, auto_white_balance=False):
-    with rawpy.imread(dng_file) as raw:
-        image = raw.postprocess(
-            demosaic_algorithm=rawpy.DemosaicAlgorithm.AHD,
-            use_auto_wb= auto_white_balance,
-            half_size=False,
-            no_auto_bright=True,
-            auto_bright_thr=0.01,
-            no_auto_scale=False,
-            output_color=rawpy.ColorSpace.sRGB,
-            output_bps=8,
-            gamma=(2.222, 4.5),
-            highlight_mode=rawpy.HighlightMode(2),
-            fbdd_noise_reduction=rawpy.FBDDNoiseReductionMode(0),
-        )
-
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        return image
-
-
-def save_hdf5(numpy_array, path):
-    print("Saving hdf5 file")
-
-    with h5py.File(f"{path}/images.hdf5", "w") as hdf5:
-        hdf5.create_dataset(
-            "images", np.shape(numpy_array), h5py.h5t.STD_U8BE, data=numpy_array
-        )
-
-
-def loadImages(path, threads=None, auto_white_balance=False):
-    """
-    Load all dng, tiff or hdf5 images from a directory into a numpy array.
-
-    Parameters:
-    path (str): The path to the directory containing the images.
-
-    Returns:
-    np.ndarray: A numpy array containing all the images in the directory.
-
-    """
+def files(path):
     # Check if the path exists and is a directory
     if not os.path.exists(path) or not os.path.isdir(path):
         raise ValueError(f"ERROR {path} is not a valid directory.")
@@ -59,141 +18,14 @@ def loadImages(path, threads=None, auto_white_balance=False):
 
     # Filter the list to only include dng, tiff, and hdf5 files
     process_file_list = [
-        os.path.join(path, x) for x in file_list if x.endswith(("dng", "tiff", "hdf5"))
+        os.path.join(path, x) for x in file_list if x.endswith(("dng", "tiff"))
     ]
 
-    # Preallocate the numpy array with the same dtype as the first image in the file list
-    numpy_array = []
+    # Check if there are any dng or tiff files in the directory
+    dng_files = [x for x in process_file_list if x.endswith("dng")]
+    tiff_files = [x for x in process_file_list if x.endswith("tiff")]
 
-    # Check if there are any hdf5 files in the filtered list
-    hdf5_files = [x for x in process_file_list if x.endswith("hdf5")]
-    if hdf5_files:
-        print("Loading hdf5 files")
-        for hdf5_file in hdf5_files:
-            # Load the images from the hdf5 file into the numpy array
-            with h5py.File(hdf5_file, "r") as hdf5:
-                numpy_array.append(np.array(hdf5["/images"][:]).astype(np.uint8))
-
-        # Concatenate the images in numpy_array along the first axis
-        numpy_array = np.concatenate(numpy_array, axis=0)
-    else:
-        dng_files = [x for x in process_file_list if x.endswith("dng")]
-        tiff_files = [x for x in process_file_list if x.endswith("tiff")]
-        # Default to half the number of cpu cores due to rawpy using multiple threads
-        workers = threads if threads else max(floor(os.cpu_count() / 2), 1)
-        with ProcessPoolExecutor(max_workers=workers) as executor:
-            if dng_files:
-                for result in executor.map(process_raw, dng_files, [auto_white_balance] * len(dng_files)):
-                    numpy_array.append(result)
-            if tiff_files:
-                for result in executor.map(cv2.imread, tiff_files):
-                    numpy_array.append(result)
-
-    return np.array(numpy_array)
-
-
-def filterLowContrast(numpy_array, scale_down=720):
-    """
-    Filter out images with low contrast from a numpy array of images.
-
-    Parameters:
-    numpy_array (np.ndarray): A numpy array of images. All images must be the same size and type.
-    scale_down (int): The scale to which the images will be resized before filtering. The smallest
-        side of the image will be resized to this value. (default=720)
-
-    Returns:
-    np.ndarray: A numpy array containing only the images that passed the low contrast filter.
-
-    """
-    # Check if input is a valid numpy array of images
-    if not isinstance(numpy_array, np.ndarray) or numpy_array.ndim != 4:
-        raise ValueError("Input must be a numpy array of images.")
-
-    # Check if all images are the same size
-    sizes = {tuple(img.shape[:2]) for img in numpy_array}
-    if len(sizes) > 1:
-        raise ValueError("All images must be the same size.")
-
-    w, h = numpy_array[0].shape[:2]
-    shrink_factor = scale_down / min(w, h)
-
-    # Preallocate the filtered_array with the same shape and dtype as the input array
-    filtered_array = []
-    # Iterate over the images in the input array
-    for i, image in enumerate(numpy_array):
-        # Check if the image is low contrast
-        if not is_low_contrast(
-            cv2.resize(image, (0, 0), fx=shrink_factor, fy=shrink_factor),
-            fraction_threshold=0.05,
-            lower_percentile=10,
-            upper_percentile=90,
-            method="linear",
-        ):
-            # If not low contrast, append to the filtered_array
-            filtered_array.append(image)
-        else:
-            # If low contrast, print the image number and continue
-            print(f"Image {i} low contrast, skipping")
-
-    filtered_array = np.array(filtered_array)
-
-    # If less than 2 images passed the low contrast filter, return a copy of the input array with the first image removed
-    if len(filtered_array) < 2:
-        print("Less than 2 images with good contrast, skipping first image only")
-        return numpy_array[1:]
-
-    # Return the filtered array
-    return filtered_array
-
-
-def fixContrast(image):
-    # get darkest and brightest pixel
-    min_pixel = np.min(image)
-    max_pixel = np.max(image)
-
-    # Subtract darkest pixel from all pixels
-    image = image - min_pixel
-
-    # multiply to bring white to max_pixel
-    image = image * (max_pixel / 255)
-
-    return image
-
-
-def shrink_images(numpy_array):
-    """
-    Shrink the images in a numpy array to half their size.
-
-    Parameters:
-    numpy_array (np.ndarray): A numpy array containing the images to shrink.
-
-    Returns:
-    np.ndarray: A numpy array containing the shrunken images.
-
-    """
-    print("Shrinking images")
-
-    # Calculate the new dimensions of the images
-    new_height = numpy_array.shape[1] // 2
-    new_width = numpy_array.shape[2] // 2
-
-    # Check if either dimension is 0
-    if new_height == 0 or new_width == 0:
-        raise ValueError("One or both dimensions is 0. Cannot shrink images.")
-
-    # Create a new numpy array to store the shrunken images
-    shrunken_array = np.empty(
-        (numpy_array.shape[0], new_height, new_width, 3), dtype=numpy_array.dtype
-    )
-
-    # Iterate over the images in the numpy array
-    for i, image in enumerate(numpy_array):
-        # Resize the image to half its size
-        shrunken_array[i] = cv2.resize(
-            image, (new_width, new_height), interpolation=cv2.INTER_LINEAR
-        )
-
-    return shrunken_array
+    return dng_files, tiff_files
 
 
 def downloader(url, file_name, directory):

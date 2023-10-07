@@ -20,7 +20,7 @@ def calculate_psnr(noisy_image, ground_truth):
 
 
 def setup_images():
-    from utils.utils import loadImages
+    from images.images import loadImages
 
     # Load noisy images
     noisy_images = loadImages("test/noisy_images")
@@ -35,7 +35,7 @@ def setup_images():
 
 
 def test_filter_low_contrast():
-    from utils.utils import filterLowContrast, loadImages
+    from images.images import filterLowContrast, loadImages
 
     ground_truth = loadImages("test/images")
 
@@ -47,7 +47,7 @@ def test_filter_low_contrast():
 
 
 def test_shrink_images():
-    from utils.utils import shrink_images
+    from images.images import shrink_images
 
     _, ground_truth = setup_images()
 

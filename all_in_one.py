@@ -3,21 +3,30 @@ import numpy as np
 
 from time import time
 
-from utils.utils import (
+from images.images import (
     loadImages,
     filterLowContrast,
-    save_hdf5,
+    save_image,
     shrink_images,
 )
+
+from denoise.denoise import denoiser
+from sharpen.sharpen import sharpen
 
 
 def setup_args():
     parser = argparse.ArgumentParser(description="Process Image")
     parser.add_argument("input_dir", help="Input directory of images")
     parser.add_argument(
-        "--interal_image_extension",
+        "--internal_image_extension",
         default="png",
         help="Extension of images to process",
+    )
+    parser.add_argument(
+        "--quality",
+        default=95,
+        type=int,
+        help="Quality of output images",
     )
     parser.add_argument("--single_image", help="Single image mode", action="store_true")
     parser.add_argument(
@@ -63,7 +72,6 @@ def setup_args():
         choices=["ORB", "ECC"],
         default="ECC",
     )
-    parser.add_argument("--show", help="Show result image", action="store_true")
     parser.add_argument(
         "--denoise_all",
         help="Denoise all images prior to stacking",
@@ -139,38 +147,44 @@ def setup_args():
         help="Auto white balance the image",
         action="store_true",
     )
+    parser.add_argument(
+        "--half_size",
+        help="Half the size of the image",
+        action="store_true",
+    )
+
     return parser.parse_args()
-
-
-def save_image(path, image, extension="png"):
-    if extension == "jpg":
-        cv2.imwrite(path, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-    elif extension == "png":
-        cv2.imwrite(path, image, [int(cv2.IMWRITE_PNG_COMPRESSION), 0])
-    else:
-        cv2.imwrite(path, image)
 
 
 # Create main and do any processing if needed
 def single_image(
-    images,
+    image,
     input_dir,
     histogram_method,
-    image_extension="png",
     clip_limit=1.2,
     tile_grid_size=(8, 8),
+    image_extension="png",
+    quality=95,
+    denoise=False,
+    denoise_method="fast",
+    denoise_amount=2,
+    sharpen_method=None,
+    sharpen_amount=1.0,
 ):
-    # Default to second image if exists if not first
-    image = images[1] if len(images) > 1 else images[0]
-
     if histogram_method != "none":
         image = single_histogram_processing(
             image, histogram_method, clip_limit, tile_grid_size
         )
 
+    if denoise:
+        image = denoiser(image, denoise_method, denoise_amount)
+
+    if sharpen_method:
+        image = sharpen(image, sharpen_method, sharpen_amount)
+
     output_image = os.path.join(input_dir, f"main.{image_extension}")
 
-    save_image(output_image, image, image_extension)
+    save_image(output_image, image, image_extension, quality)
     print(f"Saved {output_image}")
 
 
@@ -252,39 +266,38 @@ def main(args):
     loading_tic = time()
     image_folder = args.input_dir
 
-    # Load all images
-    numpy_images = loadImages(image_folder, args.parallel_raw, args.auto_white_balance)
+    # Load main image
+    numpy_images = loadImages(
+        image_folder,
+        args.parallel_raw,
+        args.half_size,
+        args.auto_white_balance,
+    )
 
-    # if image_folder/images.hdf5 does not exists create hdf5 file containing filtered images
-    if not os.path.isfile(os.path.join(image_folder, "images.hdf5")):
-        # Filter low contrast images
-        numpy_images = filterLowContrast(numpy_images, args.scale_down)
+    # Filter low contrast images
+    numpy_images = filterLowContrast(numpy_images, args.scale_down)
 
-        # Save filtered images to hdf5
-        save_hdf5(numpy_images, image_folder)
+    print(f"Loaded {len(numpy_images)} images in {(time() - loading_tic)} seconds")
 
-    print(f"Loaded {len(numpy_images)} images in {time() - loading_tic} seconds")
+    main_tic = time()
+    print("Creating main image")
 
-    if args.single_image:
-        # Create main image
-        main_tic = time()
-        print("Creating main image")
+    single_image(
+        numpy_images[0],
+        args.input_dir,
+        args.histogram_method,
+        args.clip_limit,
+        (args.tile_grid_size, args.tile_grid_size),
+        args.internal_image_extension,
+        args.quality,
+        args.denoise,
+        args.denoise_method,
+        args.denoise_amount,
+        args.sharpen,
+        args.sharpen_amount,
+    )
 
-        single_image(
-            numpy_images,
-            args.input_dir,
-            args.histogram_method,
-            args.interal_image_extension,
-            args.clip_limit,
-            (args.tile_grid_size, args.tile_grid_size),
-        )
-
-        print(f"Created main image in {time() - main_tic} seconds")
-
-        print(f"Total {time() - total_tic} seconds")
-
-        # Exit if single_image is ran to avoid processing other images
-        exit(0)
+    print(f"Single image {time() - main_tic} seconds")
 
     if args.shrink_images:
         shrink_tic = time()
@@ -344,8 +357,6 @@ def main(args):
         image = numpy_images[0]
 
     if args.sharpen:
-        from sharpen.sharpen import sharpen
-
         print("Sharpen")
         sharp_tic = time()
         image = sharpen(image, args.sharpen, args.sharpen_amount)
@@ -369,8 +380,6 @@ def main(args):
     if args.denoise:
         try:
             denoise_tic = time()
-
-            from denoise.denoise import denoiser
 
             denoiser(image, args.denoise_method, args.denoise_amount)
 
@@ -424,9 +433,9 @@ def main(args):
         print("Save process image")
 
         output_image = os.path.join(
-            args.input_dir, f"main_processed.{args.interal_image_extension}"
+            args.input_dir, f"main_processed.{args.internal_image_extension}"
         )
-        save_image(output_image, image, args.interal_image_extension)
+        save_image(output_image, image, args.internal_image_extension)
 
         print(f"Saved {output_image} in {time() - process_tic}")
 
