@@ -5,6 +5,7 @@ help() {
     echo "COMMAND:"
     echo "  --help, -h              Print this help message"
     echo "  all_in_one              Use all_in_one"
+    echo "  exif_file               Use exif_file"
     echo "FLAGS: Flags to pass to command called"
 }
 
@@ -20,6 +21,8 @@ if [ "$COMMAND" = "--help" ] || [ "$COMMAND" = "-h" ]; then
     help
 elif [ "$COMMAND" = "all_in_one" ]; then
     python all_in_one.py $FLAGS
+elif [ "$COMMAND" = "exif_file" ]; then
+    python exif_file.py $FLAGS
 else
     $COMMAND $FLAGS
 fi

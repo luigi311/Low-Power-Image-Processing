@@ -4,7 +4,6 @@ import numpy as np
 from time import time
 
 from images.images import (
-    generate_exif,
     loadImages,
     filterLowContrast,
     save_image,
@@ -277,9 +276,6 @@ def main(args):
 
     # Filter low contrast images
     numpy_images = filterLowContrast(numpy_images, args.scale_down)
-
-    # Load exif data
-    generate_exif(image_folder)
 
     print(f"Loaded {len(numpy_images)} images in {(time() - loading_tic)} seconds")
 

@@ -1,4 +1,4 @@
-import rawpy, cv2, exifread, os
+import rawpy, cv2, os
 import numpy as np
 
 from math import floor
@@ -66,23 +66,6 @@ def loadImages(path, threads=None, half_size=False, auto_white_balance=False):
                 images.append(result_image)
 
     return np.array(images)
-
-
-def generate_exif(path: str):
-    tiff_files, dng_files = files(path)
-
-    image = tiff_files[-1] if tiff_files else dng_files[-1]
-
-    with open(image, "rb") as image_file:
-        tags = exifread.process_file(image_file, details=False)
-
-    # Convert all tags to strings
-    for key, value in tags.items():
-        tags[key] = str(value)
-
-    # Save exif data to a file
-    with open(os.path.join(path, "exif.txt"), "w") as exif_file:
-        exif_file.write(str(tags))
 
 
 def save_image(path, image, extension="png", quality=95):
