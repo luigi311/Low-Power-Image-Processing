@@ -8,8 +8,8 @@ declare -a image_adaptive_3dlut_models=( "LUTs" "LUTs_unpaired" "classifier" "cl
 mkdir -p super_resolution/ denoise/ffdnet denoise/ircnn color/image_adaptive_3dlut/pretrained_models/sRGB
 
 for scale in "${scales[@]}"; do
-    wget -O "super_resolution/ESPCN_x${scale}.pb" "https://raw.githubusercontent.com/fannymonori/TF-ESPCN/master/export/ESPCN_x${scale}.pb"
-    wget -O "super_resolution/FSRCNN_x${scale}.pb" "https://raw.githubusercontent.com/Saafke/FSRCNN_Tensorflow/master/models/FSRCNN_x${scale}.pb"
+    wget -O "super_resolution/opencv/ESPCN_x${scale}.pb" "https://raw.githubusercontent.com/fannymonori/TF-ESPCN/master/export/ESPCN_x${scale}.pb"
+    wget -O "super_resolution/opencv/FSRCNN_x${scale}.pb" "https://raw.githubusercontent.com/Saafke/FSRCNN_Tensorflow/master/models/FSRCNN_x${scale}.pb"
 done
 
 for model in "${ffdnet_models[@]}"; do

@@ -9,23 +9,23 @@ def opencv_super_resolution(image, method, scale):
     sr = cv2.dnn_superres.DnnSuperResImpl_create()
 
     if method == "ESPCN":
-        path = f"{model_path}/ESPCN_x{scale}.pb"
+        model_file = f"{model_path}/ESPCN_x{scale}.pb"
         url = f"https://raw.githubusercontent.com/fannymonori/TF-ESPCN/master/export/ESPCN_x{scale}.pb"
         model = "espcn"
     elif method == "FSRCNN":
-        path = f"{model_path}/FSRCNN_x{scale}.pb"
+        model_file = f"{model_path}/FSRCNN_x{scale}.pb"
         url = f"https://raw.githubusercontent.com/Saafke/FSRCNN_Tensorflow/master/models/FSRCNN_x{scale}.pb"
         model = "fsrcnn"
     else:
         raise Exception("Super Resolution: Method not supported")
 
     # If path does not exist, download the model
-    if not os.path.exists(path):
+    if not os.path.exists(model_file):
         print("Downloading model...")
-        downloader(url, path, model_path)
+        downloader(url, model_file, model_path)
         print("Download Complete")
 
-    sr.readModel(path)
+    sr.readModel(model_file)
     sr.setModel(model, scale)
     print("Running Super Sampling")
     result = sr.upsample(image)
