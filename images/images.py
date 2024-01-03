@@ -32,6 +32,45 @@ def process_raw(dng_file, half_size=False, auto_white_balance=False):
     return image
 
 
+def process_image(image_path, half_size=False, auto_white_balance=False):
+    if image_path.endswith("dng"):
+        image = process_raw(image_path, half_size, auto_white_balance)
+    else:
+        image = cv2.imread(image_path)
+
+    return image
+
+
+def resize_images(images):
+    # Get the minimum width and height of all the images
+    min_x = min([image.shape[1] for image in images])
+    min_y = min([image.shape[0] for image in images])
+
+    # Resize all the images to the minimum width and height if they are larger and aspect ratio is compatible
+    resized_images = []
+    for image in images:
+        if image.shape[1] > min_x or image.shape[0] > min_y:
+            aspect_ratio = image.shape[1] / image.shape[0]
+            if aspect_ratio > 1.0:  # Landscape orientation
+                new_width = min_x
+                new_height = int(min_x / aspect_ratio)
+            else:  # Portrait or square orientation
+                new_height = min_y
+                new_width = int(min_y * aspect_ratio)
+
+            # Check if resizing is possible based on new dimensions
+            if new_width <= min_x and new_height <= min_y:
+                resized_image = cv2.resize(image, (new_width, new_height))
+                resized_images.append(resized_image)
+            else:
+                # Image can't be resized while maintaining aspect ratio, so skip it
+                print(f"Skipping image due to aspect ratio: {image.shape}")
+        else:
+            resized_images.append(image)
+
+    return resized_images
+
+
 def loadImages(path, threads=None, half_size=False, auto_white_balance=False):
     """
     Load all dng, tiff or hdf5 images from a directory into a numpy array.
@@ -44,7 +83,7 @@ def loadImages(path, threads=None, half_size=False, auto_white_balance=False):
 
     """
 
-    dng_files, tiff_files = files(path)
+    file_list = files(path)
 
     images = []
 
@@ -52,18 +91,16 @@ def loadImages(path, threads=None, half_size=False, auto_white_balance=False):
     workers = threads if threads else max(floor(os.cpu_count() / 2), 1)
     # Instead of appending, concatenate the result images to numpy_array
     with ProcessPoolExecutor(max_workers=workers) as executor:
-        if dng_files:
+        if file_list:
             for result_image in executor.map(
-                process_raw,
-                dng_files,
-                [half_size] * len(dng_files),
-                [auto_white_balance] * len(dng_files),
+                process_image,
+                file_list,
+                [half_size] * len(file_list),
+                [auto_white_balance] * len(file_list),
             ):
                 images.append(result_image)
 
-        if tiff_files:
-            for result_image in executor.map(cv2.imread, tiff_files):
-                images.append(result_image)
+    images = resize_images(images)
 
     return np.array(images)
 

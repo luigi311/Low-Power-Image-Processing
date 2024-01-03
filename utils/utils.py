@@ -4,7 +4,7 @@ from requests import get
 from concurrent.futures import ThreadPoolExecutor
 
 
-def files(path):
+def files(path: str) -> list:
     # Check if the path exists and is a directory
     if not os.path.exists(path) or not os.path.isdir(path):
         raise ValueError(f"ERROR {path} is not a valid directory.")
@@ -17,15 +17,19 @@ def files(path):
     file_list = os.listdir(path)
 
     # Filter the list to only include dng, tiff, and hdf5 files
-    process_file_list = [
-        os.path.join(path, x) for x in file_list if x.endswith(("dng", "tiff"))
-    ]
+    process_file_list = []
 
-    # Check if there are any dng or tiff files in the directory
-    dng_files = [x for x in process_file_list if x.endswith("dng")]
-    tiff_files = [x for x in process_file_list if x.endswith("tiff")]
+    for file in file_list:
+        if file.endswith("dng") or file.endswith("tiff"):
+            process_file_list.append(os.path.join(path, file))
+        # Allow other unncompressed formats to be processed
+        elif file.endswith("png"):
+            # exclude all that include main in the name to
+            # avoid processing processed images
+            if "main" not in file:
+                process_file_list.append(os.path.join(path, file))
 
-    return dng_files, tiff_files
+    return process_file_list
 
 
 def downloader(url, file_name, directory):
