@@ -21,3 +21,25 @@ Recommended to process an image the normal route and then pick and chose what to
     -   fastNlMeansDenoisingColored: [Denoise using OpencV built-in methods](https://opencv24-python-tutorials.readthedocs.io/en/latest/py_tutorials/py_photo/py_non_local_means/py_non_local_means.html)
     -   ircnn: [Machine Learning denoiser](https://github.com/cszn/KAIR)
     -   ffdnet: [Machine Learning denoiser](https://github.com/cszn/FFDNet)
+
+## Licensing
+
+This repo is a combination of many other peoples work/ideas, as such there a multiple different licenses in use. Please check the individual folders for the license of the code in that folder, if there is no license file then the code is licensed under the license in the root of this repo.
+
+-   color:
+    -   image_adaptive_3dlut: [Apache 2.0](color/image_adaptive_3dlut/LICENSE)
+
+-   dehaze:
+    -   darktables: [MIT](dehaze/darktables/LICENSE)
+
+-   denoise:
+    -   fast: [MIT](LICENSE)
+    -   ffdnet: [MIT](denoise/fddnet/LICENSE)
+    -   ircnn: [MIT](denoise/ircnn/LICENSE)
+
+-   stacking: [MIT](stacking/LICENSE)
+
+-   sharpen: [MIT](LICENSE)
+
+-   super_resolution: 
+    -   opencv: [Apache 2.0](super_resolution/LICENSE)
