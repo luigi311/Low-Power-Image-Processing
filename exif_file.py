@@ -98,6 +98,7 @@ def main(args):
     else:
         raise Exception("No output or image_destination specified")
 
+
 if __name__ == "__main__":
     try:
         total_tic = time()

@@ -31,6 +31,7 @@ def process_raw(dng_file, half_size=False, auto_white_balance=False):
 
     return image
 
+
 def process_image(image_path, half_size=False, auto_white_balance=False):
     if image_path.endswith("dng"):
         image = process_raw(image_path, half_size, auto_white_balance)
@@ -66,7 +67,7 @@ def resize_images(images):
                 print(f"Skipping image due to aspect ratio: {image.shape}")
         else:
             resized_images.append(image)
-    
+
     return resized_images
 
 
@@ -91,9 +92,14 @@ def loadImages(path, threads=None, half_size=False, auto_white_balance=False):
     # Instead of appending, concatenate the result images to numpy_array
     with ProcessPoolExecutor(max_workers=workers) as executor:
         if file_list:
-            for result_image in executor.map(process_image, file_list, [half_size] * len(file_list), [auto_white_balance] * len(file_list)):
+            for result_image in executor.map(
+                process_image,
+                file_list,
+                [half_size] * len(file_list),
+                [auto_white_balance] * len(file_list),
+            ):
                 images.append(result_image)
-    
+
     images = resize_images(images)
 
     return np.array(images)

@@ -24,7 +24,7 @@ def files(path: str) -> list:
             process_file_list.append(os.path.join(path, file))
         # Allow other unncompressed formats to be processed
         elif file.endswith("png"):
-            # exclude all that include main in the name to 
+            # exclude all that include main in the name to
             # avoid processing processed images
             if "main" not in file:
                 process_file_list.append(os.path.join(path, file))
